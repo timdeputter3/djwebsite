@@ -1,0 +1,18 @@
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="1000" fill="#09090B"/>
+  <rect x="54" y="66" width="692" height="868" rx="52" fill="url(#paint0_linear)"/>
+  <circle cx="218" cy="183" r="125" fill="#D9B56D" fill-opacity="0.18"/>
+  <circle cx="633" cy="809" r="154" fill="#D9B56D" fill-opacity="0.14"/>
+  <path d="M409 256C492.395 256 560 323.605 560 407V522C560 605.395 492.395 673 409 673C325.605 673 258 605.395 258 522V407C258 323.605 325.605 256 409 256Z" fill="#E8D8B1"/>
+  <path d="M228 804C254.19 711.849 338.36 648 434.16 648H438.84C534.64 648 618.81 711.849 645 804V851H228V804Z" fill="#AF7B36"/>
+  <path d="M282 380C282 300.471 346.471 236 426 236C505.529 236 570 300.471 570 380V430H282V380Z" fill="#0F1014"/>
+  <rect x="327" y="445" width="160" height="24" rx="12" fill="#0F1014"/>
+  <text x="114" y="153" fill="#F7F2E8" font-family="Georgia, serif" font-size="40" letter-spacing="4">AFTER HOURS</text>
+  <text x="114" y="875" fill="#F7F2E8" font-family="Georgia, serif" font-size="72">VICLE</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="54" y1="66" x2="746" y2="934" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#171419"/>
+      <stop offset="1" stop-color="#0B0B0D"/>
+    </linearGradient>
+  </defs>
+</svg>

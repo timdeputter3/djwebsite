@@ -1,28 +1,100 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Boek een DJ</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <h1>Boek een DJ</h1>
+{% extends "base.html" %}
+{% block title %}Bassly | Boek een DJ{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="page-hero compact-hero">
+        <p class="eyebrow">Booking intake</p>
+        <h1>Vertel ons wat voor event je plant, en Bassly zet de juiste vibe in beweging.</h1>
+        <p class="lead">
+            Je aanvraag komt eerst bij de manager terecht. Na acceptatie wordt de booking zichtbaar in de agenda,
+            zodat planning en opvolging helder blijven.
+        </p>
+    </section>
 
-    <form method="POST">
-        <label>Naam:</label><br>
-        <input type="text" name="name" required><br><br>
+    {% if success %}
+    <section class="notice success-notice">
+        <strong>Je bookingaanvraag is verstuurd.</strong>
+        <span>Ze staat nu als pending klaar in de manager agenda tot jij ze accepteert.</span>
+    </section>
+    {% endif %}
 
-        <label>Email:</label><br>
-        <input type="email" name="email" required><br><br>
+    <section class="booking-layout">
+        <form class="booking-form" method="POST">
+            <div class="form-grid">
+                <label>
+                    Naam
+                    <input type="text" name="name" required>
+                </label>
+                <label>
+                    E-mail
+                    <input type="email" name="email" required>
+                </label>
+                <label>
+                    Telefoon
+                    <input type="tel" name="phone" required>
+                </label>
+                <label>
+                    Bedrijf of organisatie
+                    <input type="text" name="company">
+                </label>
+                <label>
+                    Type event
+                    <input type="text" name="event_type" placeholder="Corporate event, wedding, club night..." required>
+                </label>
+                <label>
+                    Gewenste DJ
+                    <select name="dj" required>
+                        {% for dj in djs %}
+                        <option>{{ dj.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    Datum
+                    <input type="date" name="event_date" required>
+                </label>
+                <label>
+                    Startuur
+                    <input type="time" name="start_time" required>
+                </label>
+                <label>
+                    Einduur
+                    <input type="time" name="end_time" required>
+                </label>
+                <label>
+                    Locatie
+                    <input type="text" name="location" placeholder="Kortrijk of regio..." required>
+                </label>
+                <label>
+                    Aantal gasten
+                    <input type="number" name="guests" min="1" required>
+                </label>
+                <label class="full-width">
+                    Extra briefing
+                    <textarea name="notes" rows="5" placeholder="Vertel iets over sfeer, doelgroep, muziekvoorkeur of timing."></textarea>
+                </label>
+            </div>
+            <button class="button button-gold" type="submit">Stuur bookingaanvraag</button>
+        </form>
 
-        <label>Kies DJ:</label><br>
-        <select name="dj">
-            <option>DJ Vet & Vriend</option>
-            <option>DJ Vicle</option>
-        </select><br><br>
-
-        <button type="submit">Boek nu</button>
-    </form>
-
-    <a href="/">Home</a>
-</body>
-</html>
+        <aside class="booking-sidebar">
+            <div class="sidebar-card">
+                <p class="eyebrow">Hoe het werkt</p>
+                <ol>
+                    <li>Jij stuurt een aanvraag met datum, type event en gewenste DJ.</li>
+                    <li>De manager beoordeelt de booking en accepteert ze wanneer alles klopt.</li>
+                    <li>Na acceptatie verschijnt de booking in de agenda als bevestigd moment.</li>
+                </ol>
+            </div>
+            <div class="sidebar-card dark-card">
+                <p class="eyebrow">Bassly belofte</p>
+                <h3>Professionele uitstraling, lokale verankering, groeipotentieel voor later.</h3>
+                <p>
+                    We bouwen Bassly vanuit Kortrijk met een sterke regionale basis, zodat het platform
+                    meteen praktisch blijft en tegelijk klaar is voor een grotere toekomst.
+                </p>
+            </div>
+        </aside>
+    </section>
+</main>
+{% endblock %}

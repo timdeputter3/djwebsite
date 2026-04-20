@@ -1,0 +1,19 @@
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="1000" fill="#0C0B0D"/>
+  <circle cx="583" cy="194" r="187" fill="#D9B56D" fill-opacity="0.18"/>
+  <circle cx="165" cy="812" r="166" fill="#D9B56D" fill-opacity="0.12"/>
+  <rect x="79" y="84" width="642" height="832" rx="40" fill="url(#paint0_linear)"/>
+  <path d="M400 240C484.5 240 553 308.5 553 393V546C553 630.5 484.5 699 400 699C315.5 699 247 630.5 247 546V393C247 308.5 315.5 240 400 240Z" fill="#E8D7AF"/>
+  <path d="M278 793C289.447 706.521 360.96 640 449 640H455C543.04 640 614.553 706.521 626 793V832H278V793Z" fill="#C4964D"/>
+  <path d="M294 363C294 299.487 345.487 248 409 248C472.513 248 524 299.487 524 363V390H294V363Z" fill="#131216"/>
+  <rect x="337" y="401" width="123" height="24" rx="12" fill="#131216"/>
+  <rect x="221" y="734" width="357" height="45" rx="22.5" fill="#131216"/>
+  <text x="120" y="156" fill="#F7F2E8" font-family="Georgia, serif" font-size="48" letter-spacing="6">BASSLY</text>
+  <text x="120" y="872" fill="#F7F2E8" font-family="Georgia, serif" font-size="72">NOVA LUXE</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="79" y1="84" x2="721" y2="916" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A1713"/>
+      <stop offset="1" stop-color="#0E0D10"/>
+    </linearGradient>
+  </defs>
+</svg>

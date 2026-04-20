@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Bassly | Manager agenda{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="page-hero compact-hero">
+        <p class="eyebrow">Manager dashboard</p>
+        <h1>Overzicht van pending aanvragen en bevestigde DJ-momenten.</h1>
+        <p class="lead">
+            Gebruik deze pagina om nieuwe aanvragen te accepteren. Zodra een booking bevestigd is,
+            verhuist ze meteen naar de agenda van Bassly.
+        </p>
+        <div class="stats-row">
+            <article class="stat-pill">
+                <strong>{{ pending|length }}</strong>
+                <span>Pending aanvragen</span>
+            </article>
+            <article class="stat-pill">
+                <strong>{{ accepted|length }}</strong>
+                <span>Bevestigde bookings</span>
+            </article>
+            <article class="stat-pill">
+                <strong>{{ total_bookings }}</strong>
+                <span>Totaal ontvangen</span>
+            </article>
+        </div>
+    </section>
+
+    <section class="manager-grid">
+        <div class="panel">
+            <div class="panel-heading">
+                <h2>Te accepteren</h2>
+                <p>Nieuwe aanvragen wachten hier op jouw beslissing.</p>
+            </div>
+            {% if pending %}
+                {% for item in pending %}
+                <article class="manager-card">
+                    <div>
+                        <p class="tag">{{ item.event_type }}</p>
+                        <h3>{{ item.dj }} | {{ item.event_date }}</h3>
+                        <p>{{ item.start_time }} - {{ item.end_time }} in {{ item.location }}</p>
+                        <p>{{ item.name }} | {{ item.email }} | {{ item.phone }}</p>
+                        {% if item.notes %}
+                        <small>{{ item.notes }}</small>
+                        {% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('accept_booking', booking_id=item.id) }}">
+                        <button class="button button-gold" type="submit">Accepteer booking</button>
+                    </form>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <h3>Geen pending aanvragen</h3>
+                    <p>Alles is verwerkt of er zijn nog geen nieuwe bookings binnengekomen.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="panel">
+            <div class="panel-heading">
+                <h2>Bevestigde agenda</h2>
+                <p>Deze bookings zijn goedgekeurd en klaar voor uitvoering.</p>
+            </div>
+            {% if accepted %}
+                {% for item in accepted %}
+                <article class="manager-card accepted-card">
+                    <div>
+                        <p class="tag">Confirmed</p>
+                        <h3>{{ item.event_date }} | {{ item.dj }}</h3>
+                        <p>{{ item.start_time }} - {{ item.end_time }} | {{ item.location }}</p>
+                        <p>{{ item.name }} | {{ item.event_type }} | {{ item.guests }} gasten</p>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <h3>Nog geen bevestigde bookings</h3>
+                    <p>Na acceptatie verschijnen ze automatisch hier en op de homepagina.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</main>
+{% endblock %}

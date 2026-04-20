@@ -1,18 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Onze DJ's</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <h1>Onze DJ's</h1>
+{% extends "base.html" %}
+{% block title %}Bassly | DJ line-up{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="page-hero compact-hero">
+        <p class="eyebrow">Curated roster</p>
+        <h1>DJ's die sfeer lezen, energie bouwen en een event zijn eigen signatuur geven.</h1>
+        <p class="lead">
+            Van verfijnde corporate avonden tot nachten met clubenergie: Bassly selecteert artiesten
+            die niet alleen technisch sterk zijn, maar ook snappen wat een publiek nodig heeft.
+        </p>
+    </section>
 
-    <h2>DJ Vet & Vriend</h2>
-    <p>All-round party DJ</p>
-
-    <h2>DJ Vicle</h2>
-    <p>House & techno vibes</p>
-
-    <a href="/">Home</a>
-</body>
-</html>
+    <section class="dj-grid">
+        {% for dj in djs %}
+        <article class="dj-card dj-card-large">
+            <img src="{{ url_for('static', filename='img/' ~ dj.image) }}" alt="{{ dj.name }}">
+            <div class="dj-card-copy">
+                <p class="tag">{{ dj.genre }}</p>
+                <h2>{{ dj.name }}</h2>
+                <p>{{ dj.bio }}</p>
+                <a class="text-link" href="{{ url_for('book') }}">Deze DJ aanvragen</a>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+</main>
+{% endblock %}

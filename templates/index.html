@@ -1,14 +1,115 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>DJ Booking</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <h1>Welkom bij DJ Booking</h1>
-    <p>Boek de beste DJ's voor jouw event</p>
+{% extends "base.html" %}
+{% block title %}Bassly | Premium DJ bookings{% endblock %}
+{% block content %}
+<main>
+    <section class="hero">
+        <div class="hero-copy">
+            <p class="eyebrow">Modern premium DJ booking</p>
+            <h1>Bassly maakt DJ boeken in Kortrijk stijlvol, snel en verrassend eenvoudig.</h1>
+            <p class="lead">
+                Bassly is gevestigd in Kortrijk en helpt organisatoren, bedrijven en feestlocaties
+                om zonder gedoe de juiste DJ te vinden voor hun event. We bouwen aan een platform
+                dat vandaag al lokaal ontzorgt, en later moeiteloos kan meegroeien naar een groter netwerk.
+            </p>
+            <div class="hero-actions">
+                <a class="button button-gold" href="{{ url_for('book') }}">Boek jouw event</a>
+                <a class="button button-secondary" href="{{ url_for('djs') }}">Ontdek de line-up</a>
+            </div>
+            <div class="hero-metrics">
+                <article>
+                    <strong>Kortrijk-first</strong>
+                    <span>Lokale focus met ruimte om slim op te schalen.</span>
+                </article>
+                <article>
+                    <strong>Curated talent</strong>
+                    <span>DJ's die passen bij premium events, clubs en private parties.</span>
+                </article>
+                <article>
+                    <strong>Heldere flow</strong>
+                    <span>Aanvraag, review, acceptatie en planning in een duidelijk ritme.</span>
+                </article>
+            </div>
+        </div>
+        <div class="hero-panel">
+            <div class="hero-card highlight-card">
+                <p>Signature service</p>
+                <h2>Een premium bookingervaring die vertrouwen uitstraalt vanaf de eerste klik.</h2>
+            </div>
+            <div class="hero-card image-card">
+                <img src="{{ url_for('static', filename='img/dj-nova.svg') }}" alt="Artistieke DJ visual">
+            </div>
+        </div>
+    </section>
 
-    <a href="/djs">Bekijk DJ's</a><br>
-    <a href="/book">Boek een DJ</a>
-</body>
-</html>
+    <section class="section">
+        <div class="section-heading">
+            <p class="eyebrow">Waarom Bassly</p>
+            <h2>Meer dan een lijst met namen</h2>
+            <p>
+                We willen van DJ boeken iets maken dat professioneel aanvoelt: minder losse berichten,
+                meer overzicht, sterkere matching en een uitstraling die past bij events met ambitie.
+            </p>
+        </div>
+        <div class="feature-grid">
+            <article class="feature-card">
+                <h3>Persoonlijke selectie</h3>
+                <p>Elke aanvraag start vanuit sfeer, publiek, locatie en het moment waarop jouw event moet pieken.</p>
+            </article>
+            <article class="feature-card">
+                <h3>Duidelijke opvolging</h3>
+                <p>Boekingen komen eerst binnen als aanvraag en schuiven pas door naar de agenda na jouw manager-acceptatie.</p>
+            </article>
+            <article class="feature-card">
+                <h3>Regio met visie</h3>
+                <p>Vandaag focust Bassly op Kortrijk en omgeving, met een fundament dat klaar is voor uitbreiding.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="section section-alt">
+        <div class="section-heading">
+            <p class="eyebrow">Featured DJ's</p>
+            <h2>Een line-up met karakter</h2>
+        </div>
+        <div class="dj-grid">
+            {% for dj in djs %}
+            <article class="dj-card">
+                <img src="{{ url_for('static', filename='img/' ~ dj.image) }}" alt="{{ dj.name }}">
+                <div class="dj-card-copy">
+                    <p class="tag">{{ dj.genre }}</p>
+                    <h3>{{ dj.name }}</h3>
+                    <p>{{ dj.bio }}</p>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-heading">
+            <p class="eyebrow">Live agenda</p>
+            <h2>Geaccepteerde bookings</h2>
+            <p>Deze agenda toont enkel bookings die door Bassly bevestigd zijn en klaarstaan om uitgevoerd te worden.</p>
+        </div>
+        <div class="agenda-board">
+            {% if agenda %}
+                {% for item in agenda %}
+                <article class="agenda-item">
+                    <span class="agenda-date">{{ item.event_date }}</span>
+                    <div>
+                        <h3>{{ item.dj }} in {{ item.location }}</h3>
+                        <p>{{ item.event_type }} | {{ item.start_time }} - {{ item.end_time }} | {{ item.guests }} gasten</p>
+                        <small>Boeker: {{ item.name }}</small>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <article class="agenda-empty">
+                    <h3>De agenda wordt opgebouwd</h3>
+                    <p>Nieuwe bookings verschijnen hier zodra jij ze als manager accepteert via de managerpagina.</p>
+                </article>
+            {% endif %}
+        </div>
+    </section>
+</main>
+{% endblock %}

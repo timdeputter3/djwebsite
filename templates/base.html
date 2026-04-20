@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bassly{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="site-shell">
+        <header class="site-header">
+            <a class="brand" href="{{ url_for('home') }}">
+                <span class="brand-mark">B</span>
+                <span class="brand-copy">
+                    <strong>Bassly</strong>
+                    <small>DJ bookings in en rond Kortrijk</small>
+                </span>
+            </a>
+            <nav class="site-nav">
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('djs') }}">DJ's</a>
+                <a href="{{ url_for('book') }}">Boeken</a>
+                <a href="{{ url_for('manager') }}">Manager agenda</a>
+            </nav>
+        </header>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

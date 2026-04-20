@@ -1,0 +1,18 @@
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="1000" fill="#0B0B0D"/>
+  <path d="M0 197C110 154.333 220 133 330 133C504 133 660.5 185.5 800 290V1000H0V197Z" fill="#15110D"/>
+  <circle cx="608" cy="207" r="157" fill="#D9B56D" fill-opacity="0.22"/>
+  <rect x="77" y="90" width="646" height="820" rx="48" fill="url(#paint0_linear)"/>
+  <path d="M420 267C492.35 267 551 325.65 551 398V523C551 595.35 492.35 654 420 654C347.65 654 289 595.35 289 523V398C289 325.65 347.65 267 420 267Z" fill="#F0E2BD"/>
+  <path d="M243 795C270.615 706.845 352.313 647 444.688 647H446.312C538.687 647 620.385 706.845 648 795V849H243V795Z" fill="#B88741"/>
+  <path d="M303 380C303 304.888 363.888 244 439 244C514.112 244 575 304.888 575 380V418H303V380Z" fill="#111015"/>
+  <rect x="330" y="434" width="154" height="22" rx="11" fill="#111015"/>
+  <text x="122" y="156" fill="#F7F2E8" font-family="Georgia, serif" font-size="42" letter-spacing="4">CURATED SETS</text>
+  <text x="122" y="875" fill="#F7F2E8" font-family="Georgia, serif" font-size="72">AURIC</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="77" y1="90" x2="723" y2="910" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A1613"/>
+      <stop offset="1" stop-color="#0E0C10"/>
+    </linearGradient>
+  </defs>
+</svg>
