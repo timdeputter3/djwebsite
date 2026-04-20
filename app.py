@@ -13,22 +13,16 @@ BOOKINGS_FILE = BASE_DIR / "bookings.json"
 
 DJ_PROFILES = [
     {
-        "name": "Nova Luxe",
-        "genre": "Open format / premium events",
-        "bio": "Verbindt classy cocktails, volle dansvloeren en een vlekkeloze opbouw naar prime time.",
-        "image": "dj-nova.svg",
-    },
-    {
-        "name": "AURIC",
-        "genre": "House / afro / sunset grooves",
-        "bio": "Bekend voor warme, stijlvolle sets met internationale flair en veel gevoel voor sfeeropbouw.",
-        "image": "dj-auric.svg",
+        "name": "DJ Vet & Vriend",
+        "genre": "Open format / all-round party / student events",
+        "bio": "Een energiek duo uit de regio dat vlot schakelt tussen meezingers, party classics en moderne tracks om elk publiek meteen mee te krijgen.",
+        "image": "dj-vet-vriend.png",
     },
     {
         "name": "Vicle",
-        "genre": "Club / techno / late-night energy",
-        "bio": "Levert een strakke, moderne sound voor events die langer mogen nazinderen dan de laatste track.",
-        "image": "dj-vicle.svg",
+        "genre": "Club / house / late-night energy",
+        "bio": "Brengt een frisse, hedendaagse sound met clubgevoel, sterke opbouw en de juiste energie voor avonden die mogen blijven hangen.",
+        "image": "vicle.jpg",
     },
 ]
 

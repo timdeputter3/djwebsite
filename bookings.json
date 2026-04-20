@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "3492909558",
+    "name": "tim",
+    "email": "deputtertim@gmail.com",
+    "phone": "0470516986",
+    "company": "centaura",
+    "event_type": "monday",
+    "event_date": "2026-04-27",
+    "start_time": "21:00",
+    "end_time": "03:00",
+    "location": "graaf karel de goedelaan 32",
+    "guests": "100",
+    "dj": "Vicle",
+    "notes": "",
+    "status": "accepted",
+    "created_at": "2026-04-20 14:53",
+    "accepted_at": "2026-04-20 14:53"
+  }
+]
