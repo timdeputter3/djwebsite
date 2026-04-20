@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Bassly | Manager login{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="login-shell">
+        <div class="page-hero compact-hero">
+            <p class="eyebrow">Privé toegang</p>
+            <h1>Manager agenda alleen zichtbaar na login.</h1>
+            <p class="lead">
+                Deze pagina is enkel bedoeld voor jou als beheerder. Na login kan je aanvragen accepteren
+                en de interne planning beheren.
+            </p>
+        </div>
+
+        <form class="booking-form login-form" method="POST">
+            {% if error %}
+            <div class="notice error-notice">
+                <strong>Fout wachtwoord.</strong>
+                <span>Probeer opnieuw met jouw manager-wachtwoord.</span>
+            </div>
+            {% endif %}
+            <label>
+                Manager wachtwoord
+                <input type="password" name="password" required>
+            </label>
+            <button class="button button-gold" type="submit">Inloggen</button>
+        </form>
+    </section>
+</main>
+{% endblock %}

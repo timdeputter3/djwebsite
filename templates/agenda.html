@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+{% block title %}Bassly | Agenda{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="calendar-app" id="calendar-app" data-events='{{ agenda_events|tojson }}'>
+        <div class="calendar-toolbar">
+            <div class="calendar-toolbar-left">
+                <button class="calendar-control" type="button" data-action="today">Vandaag</button>
+                <button class="calendar-icon-button" type="button" data-action="prev" aria-label="Vorige periode">&#8249;</button>
+                <button class="calendar-icon-button" type="button" data-action="next" aria-label="Volgende periode">&#8250;</button>
+                <div class="calendar-current">
+                    <h2 id="calendar-title">Agenda</h2>
+                    <span id="calendar-subtitle">Bassly planning</span>
+                </div>
+            </div>
+            <div class="calendar-view-switch">
+                <button class="calendar-view-button is-active" type="button" data-view="month">Maand</button>
+                <button class="calendar-view-button" type="button" data-view="week">Week</button>
+                <button class="calendar-view-button" type="button" data-view="day">Dag</button>
+            </div>
+        </div>
+
+        <div class="calendar-legend-bar">
+            <div class="calendar-legend-chip">
+                <span class="calendar-legend-swatch legend-vicle"></span>
+                <span>Vicle</span>
+            </div>
+            <div class="calendar-legend-chip">
+                <span class="calendar-legend-swatch legend-vet"></span>
+                <span>DJ Vet &amp; Vriend</span>
+            </div>
+        </div>
+
+        <div class="calendar-surface">
+            <div id="calendar-render"></div>
+        </div>
+    </section>
+
+    <div class="calendar-modal hidden" id="calendar-modal" aria-hidden="true">
+        <div class="calendar-modal-backdrop" data-close-modal="true"></div>
+        <div class="calendar-modal-card" role="dialog" aria-modal="true" aria-labelledby="calendar-modal-title">
+            <button class="calendar-modal-close" type="button" data-close-modal="true" aria-label="Sluiten">&times;</button>
+            <p class="eyebrow">Booking details</p>
+            <h2 id="calendar-modal-title">Booking</h2>
+            <div class="calendar-modal-grid" id="calendar-modal-content"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+(() => {
+    const app = document.getElementById("calendar-app");
+    if (!app) return;
+
+    const rawEvents = JSON.parse(app.dataset.events || "[]");
+    const titleEl = document.getElementById("calendar-title");
+    const subtitleEl = document.getElementById("calendar-subtitle");
+    const renderEl = document.getElementById("calendar-render");
+    const modalEl = document.getElementById("calendar-modal");
+    const modalTitleEl = document.getElementById("calendar-modal-title");
+    const modalContentEl = document.getElementById("calendar-modal-content");
+    const viewButtons = Array.from(app.querySelectorAll("[data-view]"));
+    const controls = Array.from(app.querySelectorAll("[data-action]"));
+
+    const monthNames = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
+    const weekdayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+
+    const djColorMap = {
+        "DJ Vet & Vriend": "var(--calendar-rose)",
+        "Vicle": "var(--calendar-gold)"
+    };
+
+    const state = {
+        view: "month",
+        current: new Date()
+    };
+    const timeConfig = {
+        startHour: 0,
+        focusHour: 8,
+        endHour: 24,
+        slotHeight: 50
+    };
+
+    function parseDateTime(event) {
+        const start = new Date(`${event.event_date}T${event.start_time}:00`);
+        const end = new Date(`${event.event_date}T${event.end_time}:00`);
+        if (end <= start) {
+            end.setDate(end.getDate() + 1);
+        }
+        return { start, end };
+    }
+
+    const events = rawEvents.map((event) => {
+        const parsed = parseDateTime(event);
+        return {
+            ...event,
+            start: parsed.start,
+            end: parsed.end,
+            color: djColorMap[event.dj] || "var(--calendar-teal)"
+        };
+    }).sort((a, b) => a.start - b.start);
+
+    function startOfWeek(date) {
+        const d = new Date(date);
+        const day = (d.getDay() + 6) % 7;
+        d.setDate(d.getDate() - day);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function startOfMonth(date) {
+        const d = new Date(date.getFullYear(), date.getMonth(), 1);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function endOfMonth(date) {
+        const d = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        d.setHours(23, 59, 59, 999);
+        return d;
+    }
+
+    function sameDay(a, b) {
+        return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    function formatTime(date) {
+        return date.toLocaleTimeString("nl-BE", { hour: "2-digit", minute: "2-digit", hour12: false });
+    }
+
+    function formatDate(date) {
+        return date.toLocaleDateString("nl-BE", { day: "2-digit", month: "long", year: "numeric" });
+    }
+
+    function clampDate(date, min, max) {
+        return new Date(Math.max(min.getTime(), Math.min(max.getTime(), date.getTime())));
+    }
+
+    function openEventModal(event) {
+        modalTitleEl.textContent = event.dj;
+        modalContentEl.innerHTML = `
+            <div class="calendar-modal-item">
+                <span>DJ</span>
+                <strong>${event.dj}</strong>
+            </div>
+            <div class="calendar-modal-item">
+                <span>Datum</span>
+                <strong>${formatDate(event.start)}</strong>
+            </div>
+            <div class="calendar-modal-item">
+                <span>Tijd</span>
+                <strong>${formatTime(event.start)} - ${formatTime(event.end)}</strong>
+            </div>
+            <div class="calendar-modal-item">
+                <span>Locatie</span>
+                <strong>${event.location || "-"}</strong>
+            </div>
+            <div class="calendar-modal-item">
+                <span>Type event</span>
+                <strong>${event.event_type || "-"}</strong>
+            </div>
+            <div class="calendar-modal-item">
+                <span>Aantal gasten</span>
+                <strong>${event.guests || "-"}</strong>
+            </div>
+            <div class="calendar-modal-item calendar-modal-item-wide">
+                <span>Boeker</span>
+                <strong>${event.name || "-"}</strong>
+            </div>
+            <div class="calendar-modal-item calendar-modal-item-wide">
+                <span>Extra info</span>
+                <strong>${event.notes || "Geen extra briefing opgegeven."}</strong>
+            </div>
+        `;
+        modalEl.classList.remove("hidden");
+        modalEl.setAttribute("aria-hidden", "false");
+    }
+
+    function closeEventModal() {
+        modalEl.classList.add("hidden");
+        modalEl.setAttribute("aria-hidden", "true");
+    }
+
+    function attachEventCardHandlers() {
+        renderEl.querySelectorAll("[data-event-id]").forEach((card) => {
+            card.addEventListener("click", () => {
+                const event = events.find((item) => item.id === card.dataset.eventId);
+                if (event) openEventModal(event);
+            });
+        });
+    }
+
+    function assignColumns(items) {
+        const ordered = [...items].sort((a, b) => a.startMinutes - b.startMinutes || a.endMinutes - b.endMinutes);
+        const groups = [];
+        let currentGroup = [];
+        let currentGroupEnd = -1;
+
+        ordered.forEach((item) => {
+            if (!currentGroup.length || item.startMinutes < currentGroupEnd) {
+                currentGroup.push(item);
+                currentGroupEnd = Math.max(currentGroupEnd, item.endMinutes);
+            } else {
+                groups.push(currentGroup);
+                currentGroup = [item];
+                currentGroupEnd = item.endMinutes;
+            }
+        });
+        if (currentGroup.length) groups.push(currentGroup);
+
+        groups.forEach((group) => {
+            const columns = [];
+            group.forEach((item) => {
+                let columnIndex = 0;
+                while (columns[columnIndex] && columns[columnIndex] > item.startMinutes) {
+                    columnIndex += 1;
+                }
+                columns[columnIndex] = item.endMinutes;
+                item.column = columnIndex;
+                item.totalColumns = 0;
+            });
+            const totalColumns = columns.length;
+            group.forEach((item) => {
+                item.totalColumns = totalColumns;
+            });
+        });
+
+        return ordered;
+    }
+
+    function setView(view) {
+        state.view = view;
+        viewButtons.forEach((button) => {
+            button.classList.toggle("is-active", button.dataset.view === view);
+        });
+        render();
+    }
+
+    function move(direction) {
+        if (state.view === "month") {
+            state.current = new Date(state.current.getFullYear(), state.current.getMonth() + direction, 1);
+        } else if (state.view === "week") {
+            const next = new Date(state.current);
+            next.setDate(next.getDate() + (direction * 7));
+            state.current = next;
+        } else {
+            const next = new Date(state.current);
+            next.setDate(next.getDate() + direction);
+            state.current = next;
+        }
+        render();
+    }
+
+    function renderMonth() {
+        const monthStart = startOfMonth(state.current);
+        const monthEnd = endOfMonth(state.current);
+        const gridStart = startOfWeek(monthStart);
+        const gridEnd = new Date(startOfWeek(monthEnd));
+        gridEnd.setDate(gridEnd.getDate() + 6);
+
+        titleEl.textContent = `${monthNames[state.current.getMonth()]} ${state.current.getFullYear()}`;
+        subtitleEl.textContent = "Maandweergave";
+
+        const days = [];
+        for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
+            days.push(new Date(d));
+        }
+
+        const weeks = [];
+        for (let i = 0; i < days.length; i += 7) {
+            weeks.push(days.slice(i, i + 7));
+        }
+
+        const weekRows = weeks.map((week) => {
+            const weekStart = week[0];
+            const weekEnd = week[6];
+            const weekEvents = events.filter((event) => event.end >= weekStart && event.start <= new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate(), 23, 59, 59));
+            const lanes = [];
+
+            const eventPlacements = weekEvents.map((event) => {
+                const segmentStart = clampDate(event.start, weekStart, weekEnd);
+                const segmentEnd = clampDate(event.end, weekStart, new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate(), 23, 59, 59));
+                const startColumn = Math.max(1, Math.floor((segmentStart - weekStart) / 86400000) + 1);
+                const rawEndColumn = Math.floor((segmentEnd - weekStart) / 86400000) + 1;
+                const endColumn = Math.min(7, Math.max(startColumn, rawEndColumn));
+
+                let laneIndex = 0;
+                while (lanes[laneIndex] && lanes[laneIndex] >= startColumn) {
+                    laneIndex += 1;
+                }
+                lanes[laneIndex] = endColumn;
+
+                return {
+                    event,
+                    lane: laneIndex + 1,
+                    startColumn,
+                    endColumn: endColumn + 1,
+                    startsHere: sameDay(event.start, segmentStart),
+                    endsHere: sameDay(event.end, segmentEnd)
+                };
+            });
+
+            return { week, eventPlacements, laneCount: Math.max(1, lanes.length) };
+        });
+
+        renderEl.innerHTML = `
+            <div class="calendar-month">
+                <div class="calendar-month-weekdays">
+                    ${weekdayNames.map((name) => `<span>${name}</span>`).join("")}
+                </div>
+                ${weekRows.map((row) => `
+                    <section class="calendar-month-week">
+                        <div class="calendar-month-days">
+                            ${row.week.map((day) => `
+                                <article class="calendar-month-day ${day.getMonth() === state.current.getMonth() ? "" : "is-outside"} ${sameDay(day, new Date()) ? "is-today" : ""}">
+                                    <strong>${day.getDate()}</strong>
+                                    <span>${weekdayNames[(day.getDay() + 6) % 7]}</span>
+                                </article>
+                            `).join("")}
+                        </div>
+                        <div class="calendar-month-events" style="--lanes: ${row.laneCount};">
+                            ${row.eventPlacements.map((placement) => `
+                                <div class="calendar-month-bar" style="grid-column: ${placement.startColumn} / ${placement.endColumn}; grid-row: ${placement.lane}; --event-color: ${placement.event.color};">
+                                    <strong>${placement.event.dj}</strong>
+                                    <span>${placement.startsHere ? formatTime(placement.event.start) : "..." } - ${placement.endsHere ? formatTime(placement.event.end) : "..."}</span>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </section>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    function buildDaySegments(rangeStart, rangeEnd) {
+        const segments = [];
+        events.forEach((event) => {
+            if (event.end < rangeStart || event.start > rangeEnd) return;
+            let currentDay = new Date(event.start.getFullYear(), event.start.getMonth(), event.start.getDate(), 0, 0, 0);
+            while (currentDay <= event.end) {
+                const dayStart = new Date(currentDay);
+                const dayEnd = new Date(currentDay.getFullYear(), currentDay.getMonth(), currentDay.getDate(), 23, 59, 59, 999);
+                const segmentStart = new Date(Math.max(event.start.getTime(), dayStart.getTime(), rangeStart.getTime()));
+                const segmentEnd = new Date(Math.min(event.end.getTime(), dayEnd.getTime(), rangeEnd.getTime()));
+                if (segmentStart < segmentEnd || sameDay(segmentStart, segmentEnd)) {
+                    segments.push({
+                        event,
+                        dayStart,
+                        segmentStart,
+                        segmentEnd
+                    });
+                }
+                currentDay.setDate(currentDay.getDate() + 1);
+            }
+        });
+        return segments;
+    }
+
+    function renderWeek() {
+        const weekStart = startOfWeek(state.current);
+        const days = Array.from({ length: 7 }, (_, index) => {
+            const d = new Date(weekStart);
+            d.setDate(d.getDate() + index);
+            return d;
+        });
+        const weekEnd = new Date(days[6].getFullYear(), days[6].getMonth(), days[6].getDate(), 23, 59, 59, 999);
+
+        titleEl.textContent = `${monthNames[weekStart.getMonth()]} ${weekStart.getFullYear()}`;
+        subtitleEl.textContent = `Week van ${days[0].getDate()} ${monthNames[days[0].getMonth()]} tot ${days[6].getDate()} ${monthNames[days[6].getMonth()]}`;
+
+        const timedEvents = assignColumns(buildDaySegments(weekStart, weekEnd).map((item) => {
+            const dayIndex = Math.floor((item.dayStart - weekStart) / 86400000);
+            const startMinutes = item.segmentStart.getHours() * 60 + item.segmentStart.getMinutes();
+            const rawEndMinutes = item.segmentEnd.getHours() * 60 + item.segmentEnd.getMinutes();
+            const endMinutes = rawEndMinutes === 0 && !sameDay(item.segmentStart, item.segmentEnd) ? 1440 : Math.max(rawEndMinutes, startMinutes + 30);
+            return {
+                event: item.event,
+                dayIndex,
+                startMinutes,
+                endMinutes
+            };
+        }));
+
+        renderEl.innerHTML = `
+            <div class="calendar-time-view">
+                <div class="calendar-week-header">
+                    <div class="calendar-timezone-cell">GMT+02</div>
+                    ${days.map((day) => `
+                        <div class="calendar-week-day ${sameDay(day, new Date()) ? "is-today" : ""}">
+                            <span>${weekdayNames[(day.getDay() + 6) % 7]}</span>
+                            <strong>${day.getDate()}</strong>
+                        </div>
+                    `).join("")}
+                </div>
+                <div class="calendar-time-scroller" data-focus-hour="${timeConfig.focusHour}">
+                    <div class="calendar-week-grid">
+                    <div class="calendar-hour-labels">
+                        ${Array.from({ length: timeConfig.endHour - timeConfig.startHour }, (_, index) => index + timeConfig.startHour).map((hour) => `<span>${String(hour).padStart(2, "0")}:00</span>`).join("")}
+                    </div>
+                    <div class="calendar-week-columns">
+                        ${days.map(() => '<div class="calendar-week-column"></div>').join("")}
+                        ${timedEvents.map((item) => `
+                            <article
+                                class="calendar-time-event"
+                                data-event-id="${item.event.id}"
+                                style="--column: ${item.dayIndex + 1}; --start: ${item.startMinutes}; --end: ${item.endMinutes}; --event-color: ${item.event.color}; --overlap-column: ${item.column}; --overlap-count: ${item.totalColumns};"
+                            >
+                                <strong>${item.event.dj}</strong>
+                                <span>${formatTime(item.event.start)} - ${formatTime(item.event.end)}</span>
+                                <small>${item.event.location}</small>
+                            </article>
+                        `).join("")}
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderDay() {
+        const dayStart = new Date(state.current.getFullYear(), state.current.getMonth(), state.current.getDate(), 0, 0, 0);
+        const dayEnd = new Date(state.current.getFullYear(), state.current.getMonth(), state.current.getDate(), 23, 59, 59, 999);
+        const timedEvents = assignColumns(buildDaySegments(dayStart, dayEnd).map((item) => {
+            const startMinutes = item.segmentStart.getHours() * 60 + item.segmentStart.getMinutes();
+            const rawEndMinutes = item.segmentEnd.getHours() * 60 + item.segmentEnd.getMinutes();
+            const endMinutes = rawEndMinutes === 0 && !sameDay(item.segmentStart, item.segmentEnd) ? 1440 : Math.max(rawEndMinutes, startMinutes + 30);
+            return {
+                event: item.event,
+                startMinutes,
+                endMinutes
+            };
+        }));
+
+        titleEl.textContent = `${weekdayNames[(state.current.getDay() + 6) % 7]} ${state.current.getDate()} ${monthNames[state.current.getMonth()]} ${state.current.getFullYear()}`;
+        subtitleEl.textContent = "Dagweergave";
+
+        renderEl.innerHTML = `
+            <div class="calendar-time-view day-mode">
+                <div class="calendar-time-scroller" data-focus-hour="${timeConfig.focusHour}">
+                    <div class="calendar-day-layout">
+                    <div class="calendar-hour-labels">
+                        ${Array.from({ length: timeConfig.endHour - timeConfig.startHour }, (_, index) => index + timeConfig.startHour).map((hour) => `<span>${String(hour).padStart(2, "0")}:00</span>`).join("")}
+                    </div>
+                    <div class="calendar-day-column">
+                        ${timedEvents.map((item) => `
+                            <article
+                                class="calendar-time-event day-event"
+                                data-event-id="${item.event.id}"
+                                style="--column: 1; --start: ${item.startMinutes}; --end: ${item.endMinutes}; --event-color: ${item.event.color}; --overlap-column: ${item.column}; --overlap-count: ${item.totalColumns};"
+                            >
+                                <strong>${item.event.dj}</strong>
+                                <span>${formatTime(item.event.start)} - ${formatTime(item.event.end)}</span>
+                                <small>${item.event.location}</small>
+                            </article>
+                        `).join("")}
+                    </div>
+                </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function render() {
+        if (state.view === "month") {
+            renderMonth();
+        } else if (state.view === "week") {
+            renderWeek();
+        } else {
+            renderDay();
+        }
+
+        attachEventCardHandlers();
+
+        const scroller = renderEl.querySelector(".calendar-time-scroller");
+        if (scroller) {
+            scroller.scrollTop = timeConfig.focusHour * timeConfig.slotHeight;
+        }
+    }
+
+    controls.forEach((button) => {
+        button.addEventListener("click", () => {
+            const action = button.dataset.action;
+            if (action === "today") {
+                state.current = new Date();
+                render();
+                return;
+            }
+            if (action === "prev") move(-1);
+            if (action === "next") move(1);
+        });
+    });
+
+    viewButtons.forEach((button) => {
+        button.addEventListener("click", () => setView(button.dataset.view));
+    });
+
+    modalEl.querySelectorAll("[data-close-modal]").forEach((button) => {
+        button.addEventListener("click", closeEventModal);
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeEventModal();
+    });
+
+    render();
+})();
+</script>
+{% endblock %}

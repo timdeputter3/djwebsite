@@ -1,9 +1,11 @@
 import json
 import os
-from datetime import datetime
+from calendar import month_name, monthrange
+from datetime import datetime, timedelta
+from functools import wraps
 from pathlib import Path
 
-from flask import Flask, abort, redirect, render_template, request, url_for
+from flask import Flask, abort, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -18,8 +20,10 @@ if database_url and database_url.startswith("postgres://"):
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url or f"sqlite:///{LOCAL_DATABASE.as_posix()}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "bassly-dev-secret-change-me")
 
 db = SQLAlchemy(app)
+MANAGER_PASSWORD = os.environ.get("MANAGER_PASSWORD", "Moustache09")
 
 DJ_PROFILES = [
     {
@@ -124,6 +128,92 @@ def accepted_bookings(limit=None):
     return [serialize_booking(booking) for booking in bookings]
 
 
+def add_month_bucket(months, date_value):
+    month_key = (date_value.year, date_value.month)
+    if month_key not in months:
+        first_weekday, total_days = monthrange(date_value.year, date_value.month)
+        months[month_key] = {
+            "label": f"{month_name[date_value.month]} {date_value.year}",
+            "year": date_value.year,
+            "month": date_value.month,
+            "total_days": total_days,
+            "first_weekday": first_weekday,
+            "days": [
+                {
+                    "day": day,
+                    "weekday": ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"][
+                        datetime(date_value.year, date_value.month, day).weekday()
+                    ],
+                }
+                for day in range(1, total_days + 1)
+            ],
+            "timeline_events": [],
+        }
+    return months[month_key]
+
+
+def build_agenda_months():
+    bookings = accepted_bookings()
+    months = {}
+    for booking in bookings:
+        start_date = datetime.strptime(booking["event_date"], "%Y-%m-%d").date()
+        overnight = booking["end_time"] <= booking["start_time"]
+        end_date = start_date + timedelta(days=1) if overnight else start_date
+
+        current_date = start_date
+        while current_date <= end_date:
+            month_bucket = add_month_bucket(months, current_date)
+            month_start = current_date.replace(day=1)
+            month_end = current_date.replace(day=month_bucket["total_days"])
+
+            segment_start = max(start_date, month_start)
+            segment_end = min(end_date, month_end)
+
+            month_bucket["timeline_events"].append(
+                {
+                    "id": booking["id"],
+                    "dj": booking["dj"],
+                    "location": booking["location"],
+                    "start_time": booking["start_time"],
+                    "end_time": booking["end_time"],
+                    "event_type": booking["event_type"],
+                    "start_day": segment_start.day,
+                    "end_day": segment_end.day,
+                    "starts_here": segment_start == start_date,
+                    "ends_here": segment_end == end_date,
+                    "is_overnight": overnight,
+                }
+            )
+
+            current_date = month_end + timedelta(days=1)
+
+    for month in months.values():
+        month["timeline_events"].sort(
+            key=lambda item: (item["start_day"], item["start_time"], item["dj"])
+        )
+
+    return [months[key] for key in sorted(months)]
+
+
+def is_manager_logged_in():
+    return session.get("manager_authenticated", False)
+
+
+def manager_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(*args, **kwargs):
+        if not is_manager_logged_in():
+            return redirect(url_for("manager_login", next=request.path))
+        return view_func(*args, **kwargs)
+
+    return wrapped_view
+
+
+@app.context_processor
+def inject_global_state():
+    return {"manager_logged_in": is_manager_logged_in()}
+
+
 with app.app_context():
     bootstrap_database()
 
@@ -137,6 +227,11 @@ def home():
 @app.route("/djs")
 def djs():
     return render_template("djs.html", djs=DJ_PROFILES)
+
+
+@app.route("/agenda")
+def agenda():
+    return render_template("agenda.html", agenda_events=accepted_bookings())
 
 
 @app.route("/book", methods=["GET", "POST"])
@@ -169,7 +264,28 @@ def book():
     )
 
 
+@app.route("/manager/login", methods=["GET", "POST"])
+def manager_login():
+    error = False
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        if password == MANAGER_PASSWORD:
+            session["manager_authenticated"] = True
+            destination = request.args.get("next") or url_for("manager")
+            return redirect(destination)
+        error = True
+
+    return render_template("manager_login.html", error=error)
+
+
+@app.route("/manager/logout")
+def manager_logout():
+    session.pop("manager_authenticated", None)
+    return redirect(url_for("home"))
+
+
 @app.route("/manager")
+@manager_required
 def manager():
     pending = (
         Booking.query.filter_by(status="pending")
@@ -190,6 +306,7 @@ def manager():
 
 
 @app.route("/manager/bookings/<booking_id>/accept", methods=["POST"])
+@manager_required
 def accept_booking(booking_id):
     booking = Booking.query.filter_by(public_id=booking_id).first()
     if booking is None:

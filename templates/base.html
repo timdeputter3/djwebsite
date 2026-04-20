@@ -18,9 +18,15 @@
             </a>
             <nav class="site-nav">
                 <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('agenda') }}">Agenda</a>
                 <a href="{{ url_for('djs') }}">DJ's</a>
                 <a href="{{ url_for('book') }}">Boeken</a>
-                <a href="{{ url_for('manager') }}">Manager agenda</a>
+                {% if manager_logged_in %}
+                <a href="{{ url_for('manager') }}">Manager</a>
+                <a href="{{ url_for('manager_logout') }}">Logout</a>
+                {% else %}
+                <a href="{{ url_for('manager_login') }}">Manager login</a>
+                {% endif %}
             </nav>
         </header>
         {% block content %}{% endblock %}

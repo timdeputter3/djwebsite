@@ -14,3 +14,7 @@ services:
         fromDatabase:
           name: bassly-db
           property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MANAGER_PASSWORD
+        sync: false
