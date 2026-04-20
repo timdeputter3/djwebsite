@@ -4,9 +4,11 @@ from calendar import month_name, monthrange
 from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
+from uuid import uuid4
 
 from flask import Flask, abort, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -14,6 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent
 LEGACY_BOOKINGS_FILE = BASE_DIR / "bookings.json"
 LOCAL_DATABASE = BASE_DIR / "bassly.db"
 DJ_IMAGE_ROOT = BASE_DIR / "static" / "img" / "djs"
+APPLICATION_UPLOAD_ROOT = BASE_DIR / "static" / "uploads" / "dj-applications"
 
 database_url = os.environ.get("DATABASE_URL")
 if database_url and database_url.startswith("postgres://"):
@@ -22,9 +25,11 @@ if database_url and database_url.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url or f"sqlite:///{LOCAL_DATABASE.as_posix()}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "bassly-dev-secret-change-me")
+app.config["MAX_CONTENT_LENGTH"] = 24 * 1024 * 1024
 
 db = SQLAlchemy(app)
 MANAGER_PASSWORD = os.environ.get("MANAGER_PASSWORD", "Moustache09")
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 def build_gallery(folder_name):
     folder = DJ_IMAGE_ROOT / folder_name
@@ -77,6 +82,26 @@ class Booking(db.Model):
     accepted_at = db.Column(db.DateTime, nullable=True)
 
 
+class DJApplication(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    public_id = db.Column(db.String(24), unique=True, nullable=False)
+    stage_name = db.Column(db.String(160), nullable=False)
+    contact_name = db.Column(db.String(160), nullable=False)
+    email = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(50), nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    genres = db.Column(db.String(240), nullable=False)
+    music_style = db.Column(db.Text, nullable=False)
+    experience = db.Column(db.Text, nullable=False)
+    equipment = db.Column(db.Text, nullable=True)
+    socials = db.Column(db.Text, nullable=True)
+    availability = db.Column(db.Text, nullable=True)
+    bio = db.Column(db.Text, nullable=False)
+    photo_paths = db.Column(db.Text, nullable=False, default="[]")
+    status = db.Column(db.String(20), nullable=False, default="new")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
 def serialize_booking(booking):
     return {
         "id": booking.public_id,
@@ -96,6 +121,52 @@ def serialize_booking(booking):
         "created_at": booking.created_at.strftime("%Y-%m-%d %H:%M"),
         "accepted_at": booking.accepted_at.strftime("%Y-%m-%d %H:%M") if booking.accepted_at else "",
     }
+
+
+def serialize_application(application):
+    return {
+        "id": application.public_id,
+        "stage_name": application.stage_name,
+        "contact_name": application.contact_name,
+        "email": application.email,
+        "phone": application.phone,
+        "city": application.city,
+        "genres": application.genres,
+        "music_style": application.music_style,
+        "experience": application.experience,
+        "equipment": application.equipment or "",
+        "socials": application.socials or "",
+        "availability": application.availability or "",
+        "bio": application.bio,
+        "photo_paths": json.loads(application.photo_paths or "[]"),
+        "status": application.status,
+        "created_at": application.created_at.strftime("%Y-%m-%d %H:%M"),
+    }
+
+
+def allowed_image(filename):
+    return Path(filename).suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
+
+
+def save_application_photos(files, application_id):
+    saved_paths = []
+    target_dir = APPLICATION_UPLOAD_ROOT / application_id
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    for index, photo in enumerate(files, start=1):
+        if not photo or not photo.filename:
+            continue
+        if not allowed_image(photo.filename):
+            continue
+
+        safe_name = secure_filename(photo.filename)
+        extension = Path(safe_name).suffix.lower()
+        filename = f"{index:02d}-{uuid4().hex[:8]}{extension}"
+        destination = target_dir / filename
+        photo.save(destination)
+        saved_paths.append(f"uploads/dj-applications/{application_id}/{filename}")
+
+    return saved_paths
 
 
 def migrate_legacy_bookings():
@@ -131,6 +202,7 @@ def migrate_legacy_bookings():
 
 
 def bootstrap_database():
+    APPLICATION_UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
     db.create_all()
     migrate_legacy_bookings()
 
@@ -250,6 +322,35 @@ def agenda():
     return render_template("agenda.html", agenda_events=accepted_bookings())
 
 
+@app.route("/join", methods=["GET", "POST"])
+def join():
+    if request.method == "POST":
+        application_id = uuid4().hex[:12]
+        photo_paths = save_application_photos(request.files.getlist("photos"), application_id)
+
+        application = DJApplication(
+            public_id=application_id,
+            stage_name=request.form["stage_name"].strip(),
+            contact_name=request.form["contact_name"].strip(),
+            email=request.form["email"].strip(),
+            phone=request.form["phone"].strip(),
+            city=request.form["city"].strip(),
+            genres=request.form["genres"].strip(),
+            music_style=request.form["music_style"].strip(),
+            experience=request.form["experience"].strip(),
+            equipment=request.form.get("equipment", "").strip(),
+            socials=request.form.get("socials", "").strip(),
+            availability=request.form.get("availability", "").strip(),
+            bio=request.form["bio"].strip(),
+            photo_paths=json.dumps(photo_paths),
+        )
+        db.session.add(application)
+        db.session.commit()
+        return redirect(url_for("join", success="1"))
+
+    return render_template("join.html", success=request.args.get("success") == "1")
+
+
 @app.route("/book", methods=["GET", "POST"])
 def book():
     if request.method == "POST":
@@ -317,6 +418,10 @@ def manager():
         "manager.html",
         pending=[serialize_booking(booking) for booking in pending],
         accepted=[serialize_booking(booking) for booking in accepted],
+        applications=[
+            serialize_application(application)
+            for application in DJApplication.query.order_by(DJApplication.created_at.desc()).all()
+        ],
         total_bookings=Booking.query.count(),
     )
 

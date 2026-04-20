@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Bassly | DJ aanmelden{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="page-hero compact-hero">
+        <p class="eyebrow">DJ onboarding</p>
+        <h1>Wil je deel uitmaken van Bassly? Stel jezelf professioneel voor.</h1>
+        <p class="lead">
+            Vul je stijl, ervaring, genres en visuals in. Zo kan Bassly snel inschatten
+            of je past binnen de line-up voor events in Kortrijk en daarbuiten.
+        </p>
+    </section>
+
+    {% if success %}
+    <section class="notice success-notice">
+        <strong>Je aanmelding is verzonden.</strong>
+        <span>De manager kan nu je profiel, foto's en muziekstijl bekijken.</span>
+    </section>
+    {% endif %}
+
+    <section class="booking-layout">
+        <form class="booking-form" method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+                <label>
+                    DJ naam / artiestennaam
+                    <input type="text" name="stage_name" required>
+                </label>
+                <label>
+                    Contactpersoon
+                    <input type="text" name="contact_name" required>
+                </label>
+                <label>
+                    E-mail
+                    <input type="email" name="email" required>
+                </label>
+                <label>
+                    Telefoon
+                    <input type="tel" name="phone" required>
+                </label>
+                <label>
+                    Stad / regio
+                    <input type="text" name="city" placeholder="Kortrijk, Gent, Brugge..." required>
+                </label>
+                <label>
+                    Genres
+                    <input type="text" name="genres" placeholder="House, open format, afro, techno..." required>
+                </label>
+                <label class="full-width">
+                    Wat draai je precies?
+                    <textarea name="music_style" rows="4" placeholder="Beschrijf je sound, energie en soort events waar je best tot je recht komt." required></textarea>
+                </label>
+                <label class="full-width">
+                    Ervaring
+                    <textarea name="experience" rows="4" placeholder="Vertel over eerdere events, clubs, privéfeesten of residenties." required></textarea>
+                </label>
+                <label class="full-width">
+                    Bio / profieltekst
+                    <textarea name="bio" rows="5" placeholder="Geef een korte professionele introductie die Bassly intern kan gebruiken." required></textarea>
+                </label>
+                <label>
+                    Materiaal / setup
+                    <textarea name="equipment" rows="3" placeholder="Bijvoorbeeld eigen controller, USB-only, microfoon, licht..."></textarea>
+                </label>
+                <label>
+                    Sociale media / links
+                    <textarea name="socials" rows="3" placeholder="Instagram, SoundCloud, Mixcloud, YouTube, website..."></textarea>
+                </label>
+                <label class="full-width">
+                    Beschikbaarheid
+                    <textarea name="availability" rows="3" placeholder="Weekend, last-minute, corporate avonden, weddings, club nights..."></textarea>
+                </label>
+                <label class="full-width">
+                    Foto's uploaden
+                    <input type="file" name="photos" accept=".jpg,.jpeg,.png,.webp" multiple>
+                </label>
+            </div>
+            <button class="button button-gold" type="submit">Stuur DJ-aanmelding</button>
+        </form>
+
+        <aside class="booking-sidebar">
+            <div class="sidebar-card">
+                <p class="eyebrow">Wat meesturen</p>
+                <ol>
+                    <li>Een duidelijke artiestennaam en korte professionele bio.</li>
+                    <li>Genres en type events waar je het sterkst in bent.</li>
+                    <li>Meerdere foto's die je uitstraling en setup tonen.</li>
+                </ol>
+            </div>
+            <div class="sidebar-card dark-card">
+                <p class="eyebrow">Voor Bassly</p>
+                <h3>We zoeken DJ's met karakter, betrouwbaarheid en een duidelijke identiteit.</h3>
+                <p>
+                    Bassly bouwt rustig maar bewust aan een line-up die zowel visueel als muzikaal vertrouwen uitstraalt.
+                </p>
+            </div>
+        </aside>
+    </section>
+</main>
+{% endblock %}

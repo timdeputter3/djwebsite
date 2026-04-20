@@ -80,5 +80,44 @@
             {% endif %}
         </div>
     </section>
+
+    <section class="panel">
+        <div class="panel-heading">
+            <h2>DJ aanmeldingen</h2>
+            <p>Nieuwe artiestenprofielen die zich via de website hebben aangemeld.</p>
+        </div>
+        {% if applications %}
+            {% for item in applications %}
+            <article class="application-card">
+                <div class="application-copy">
+                    <p class="tag">{{ item.city }} | {{ item.genres }}</p>
+                    <h3>{{ item.stage_name }}</h3>
+                    <p>{{ item.contact_name }} | {{ item.email }} | {{ item.phone }}</p>
+                    <p>{{ item.music_style }}</p>
+                    <small>{{ item.bio }}</small>
+                    {% if item.socials %}
+                    <small>Links: {{ item.socials }}</small>
+                    {% endif %}
+                    {% if item.equipment %}
+                    <small>Setup: {{ item.equipment }}</small>
+                    {% endif %}
+                    {% if item.availability %}
+                    <small>Beschikbaarheid: {{ item.availability }}</small>
+                    {% endif %}
+                </div>
+                <div class="application-gallery">
+                    {% for photo in item.photo_paths %}
+                    <img src="{{ url_for('static', filename=photo) }}" alt="{{ item.stage_name }}">
+                    {% endfor %}
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <h3>Nog geen DJ-aanmeldingen</h3>
+                <p>Zodra iemand zich aanmeldt via de nieuwe onboardingpagina verschijnt die hier.</p>
+            </div>
+        {% endif %}
+    </section>
 </main>
 {% endblock %}

@@ -852,6 +852,39 @@ textarea:focus {
     color: var(--muted);
 }
 
+.application-card {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 18px;
+    padding: 18px;
+    border-radius: 22px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.application-copy {
+    display: grid;
+    gap: 10px;
+}
+
+.application-copy p,
+.application-copy small {
+    margin: 0;
+    color: var(--muted);
+}
+
+.application-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.application-gallery img {
+    border-radius: 18px;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
 @media (max-width: 920px) {
     .hero,
     .booking-layout,
@@ -900,6 +933,10 @@ textarea:focus {
     }
 
     .calendar-modal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .application-card {
         grid-template-columns: 1fr;
     }
 
