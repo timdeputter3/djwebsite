@@ -36,7 +36,7 @@
                 <h2>Een premium bookingervaring die vertrouwen uitstraalt vanaf de eerste klik.</h2>
             </div>
             <div class="hero-card image-card">
-                <img src="{{ url_for('static', filename='img/dj-vet-vriend.png') }}" alt="DJ Vet &amp; Vriend">
+                <img src="{{ url_for('static', filename=djs[0].gallery[0]) }}" alt="DJ Vet &amp; Vriend">
             </div>
         </div>
     </section>
@@ -75,11 +75,16 @@
         <div class="dj-grid">
             {% for dj in djs %}
             <article class="dj-card">
-                <img src="{{ url_for('static', filename='img/' ~ dj.image) }}" alt="{{ dj.name }}">
+                <div class="dj-collage">
+                    {% for image in dj.gallery[:3] %}
+                    <img src="{{ url_for('static', filename=image) }}" alt="{{ dj.name }}">
+                    {% endfor %}
+                </div>
                 <div class="dj-card-copy">
                     <p class="tag">{{ dj.genre }}</p>
                     <h3>{{ dj.name }}</h3>
                     <p>{{ dj.bio }}</p>
+                    <small>{{ dj.gallery|length }} foto's beschikbaar</small>
                 </div>
             </article>
             {% endfor %}

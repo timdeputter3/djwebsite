@@ -13,6 +13,7 @@ app = Flask(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 LEGACY_BOOKINGS_FILE = BASE_DIR / "bookings.json"
 LOCAL_DATABASE = BASE_DIR / "bassly.db"
+DJ_IMAGE_ROOT = BASE_DIR / "static" / "img" / "djs"
 
 database_url = os.environ.get("DATABASE_URL")
 if database_url and database_url.startswith("postgres://"):
@@ -25,18 +26,33 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "bassly-dev-secret-chang
 db = SQLAlchemy(app)
 MANAGER_PASSWORD = os.environ.get("MANAGER_PASSWORD", "Moustache09")
 
+def build_gallery(folder_name):
+    folder = DJ_IMAGE_ROOT / folder_name
+    if not folder.exists():
+        return []
+
+    files = sorted(
+        [
+            file for file in folder.iterdir()
+            if file.is_file() and file.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+        ],
+        key=lambda file: file.name.lower(),
+    )
+    return [f"img/djs/{folder_name}/{file.name}" for file in files]
+
+
 DJ_PROFILES = [
     {
         "name": "DJ Vet & Vriend",
         "genre": "Open format / all-round party / student events",
         "bio": "Een energiek duo uit de regio dat vlot schakelt tussen meezingers, party classics en moderne tracks om elk publiek meteen mee te krijgen.",
-        "image": "dj-vet-vriend.png",
+        "gallery": build_gallery("vet-vriend"),
     },
     {
         "name": "Vicle",
         "genre": "Club / house / late-night energy",
         "bio": "Brengt een frisse, hedendaagse sound met clubgevoel, sterke opbouw en de juiste energie voor avonden die mogen blijven hangen.",
-        "image": "vicle.jpg",
+        "gallery": build_gallery("vicle"),
     },
 ]
 

@@ -311,6 +311,46 @@ main,
     background: #120f0a;
 }
 
+.dj-collage {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    grid-template-rows: repeat(2, minmax(120px, 1fr));
+    gap: 8px;
+    padding: 8px;
+}
+
+.dj-collage img:first-child {
+    grid-row: 1 / span 2;
+    min-height: 100%;
+}
+
+.dj-collage img {
+    border-radius: 18px;
+    aspect-ratio: 4 / 3;
+}
+
+.dj-gallery {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+}
+
+.dj-gallery-lead img {
+    border-radius: 22px;
+    aspect-ratio: 16 / 10;
+}
+
+.dj-gallery-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.dj-gallery-strip img {
+    border-radius: 18px;
+    aspect-ratio: 1 / 1;
+}
+
 .dj-card-copy {
     padding: 20px;
 }
@@ -786,6 +826,10 @@ textarea:focus {
     grid-column: 1 / -1;
 }
 
+.dj-card-copy small {
+    color: var(--gold-soft);
+}
+
 .panel-heading p,
 .empty-state h3 {
     margin: 0;
@@ -858,6 +902,10 @@ textarea:focus {
     .calendar-modal-grid {
         grid-template-columns: 1fr;
     }
+
+    .dj-collage {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @media (max-width: 640px) {
@@ -892,5 +940,14 @@ textarea:focus {
     .calendar-month-events,
     .calendar-spanning-strip {
         min-width: 760px;
+    }
+
+    .dj-collage,
+    .dj-gallery-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .dj-collage img:first-child {
+        grid-row: auto;
     }
 }
