@@ -52,7 +52,9 @@ SUPABASE_STORAGE_BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "bassly-medi
 
 database_url = os.environ.get("DATABASE_URL")
 if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+    database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif database_url and database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url or f"sqlite:///{LOCAL_DATABASE.as_posix()}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -83,7 +85,7 @@ def current_database_label():
     uri = app.config["SQLALCHEMY_DATABASE_URI"]
     if uri.startswith("sqlite:///"):
         return "sqlite"
-    if uri.startswith("postgresql://"):
+    if uri.startswith("postgresql://") or uri.startswith("postgresql+psycopg://"):
         return "postgresql"
     return "unknown"
 
