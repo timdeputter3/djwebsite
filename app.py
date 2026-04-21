@@ -88,6 +88,7 @@ DJ_PROFILES = [
         "availability": [],
         "socials": "",
         "source": "core",
+        "active": True,
     },
     {
         "name": "Vicle",
@@ -98,6 +99,7 @@ DJ_PROFILES = [
         "availability": [],
         "socials": "",
         "source": "core",
+        "active": True,
     },
 ]
 
@@ -142,6 +144,14 @@ class DJApplication(db.Model):
     manager_note = db.Column(db.Text, nullable=True)
     decided_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
+class DJStatus(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String(160), unique=True, nullable=False)
+    name = db.Column(db.String(160), nullable=False)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    source = db.Column(db.String(40), nullable=False, default="core")
 
 
 def parse_availability(value):
@@ -254,19 +264,49 @@ def serialize_application(application):
 def ensure_schema():
     inspector = inspect(db.engine)
     if "dj_application" not in inspector.get_table_names():
-        return
+        pass
+    else:
+        columns = {column["name"] for column in inspector.get_columns("dj_application")}
+        statements = []
+        if "manager_note" not in columns:
+            statements.append("ALTER TABLE dj_application ADD COLUMN manager_note TEXT")
+        if "decided_at" not in columns:
+            statements.append("ALTER TABLE dj_application ADD COLUMN decided_at DATETIME")
 
-    columns = {column["name"] for column in inspector.get_columns("dj_application")}
-    statements = []
-    if "manager_note" not in columns:
-        statements.append("ALTER TABLE dj_application ADD COLUMN manager_note TEXT")
-    if "decided_at" not in columns:
-        statements.append("ALTER TABLE dj_application ADD COLUMN decided_at DATETIME")
+        if statements:
+            with db.engine.begin() as connection:
+                for statement in statements:
+                    connection.execute(text(statement))
 
-    if statements:
-        with db.engine.begin() as connection:
-            for statement in statements:
-                connection.execute(text(statement))
+
+def sync_dj_status_records():
+    existing = {record.slug: record for record in DJStatus.query.all()}
+
+    for dj in DJ_PROFILES:
+        if dj["slug"] not in existing:
+            db.session.add(
+                DJStatus(
+                    slug=dj["slug"],
+                    name=dj["name"],
+                    active=True,
+                    source="core",
+                )
+            )
+
+    accepted_apps = DJApplication.query.filter_by(status="accepted").all()
+    for application in accepted_apps:
+        slug = slugify_name(application.stage_name)
+        if slug not in existing:
+            db.session.add(
+                DJStatus(
+                    slug=slug,
+                    name=application.stage_name,
+                    active=True,
+                    source="application",
+                )
+            )
+
+    db.session.commit()
 
 
 def migrate_legacy_bookings():
@@ -304,6 +344,7 @@ def bootstrap_database():
     db.create_all()
     ensure_schema()
     migrate_legacy_bookings()
+    sync_dj_status_records()
 
 
 def accepted_bookings(limit=None):
@@ -316,18 +357,26 @@ def accepted_bookings(limit=None):
 
 
 def public_djs():
+    status_map = {item.slug: item for item in DJStatus.query.all()}
     accepted_applications = (
         DJApplication.query.filter_by(status="accepted")
         .order_by(DJApplication.created_at.desc())
         .all()
     )
     dynamic = []
+    core = []
+    for dj in DJ_PROFILES:
+        status = status_map.get(dj["slug"])
+        core.append({**dj, "active": True if status is None else status.active})
+
     for application in accepted_applications:
         photos = json.loads(application.photo_paths or "[]")
+        slug = slugify_name(application.stage_name)
+        status = status_map.get(slug)
         dynamic.append(
             {
                 "name": application.stage_name,
-                "slug": slugify_name(application.stage_name),
+                "slug": slug,
                 "genre": application.genres,
                 "bio": application.bio,
                 "gallery": photos,
@@ -337,9 +386,10 @@ def public_djs():
                 "experience": application.experience,
                 "city": application.city,
                 "source": "application",
+                "active": True if status is None else status.active,
             }
         )
-    return DJ_PROFILES + dynamic
+    return core + dynamic
 
 
 def find_public_dj(slug):
@@ -347,6 +397,10 @@ def find_public_dj(slug):
         if dj.get("slug") == slug:
             return dj
     return None
+
+
+def active_public_djs():
+    return [dj for dj in public_djs() if dj.get("active", True)]
 
 
 def booking_conflicts(dj_name, event_date, start_time, end_time, exclude_public_id=None):
@@ -463,12 +517,22 @@ def join():
 
 @app.route("/book", methods=["GET", "POST"])
 def book():
-    djs = public_djs()
+    djs = active_public_djs()
     if request.method == "POST":
         event_date = datetime.strptime(request.form["event_date"], "%Y-%m-%d").date()
         start_time = datetime.strptime(request.form["start_time"], "%H:%M").time()
         end_time = datetime.strptime(request.form["end_time"], "%H:%M").time()
         dj_name = request.form["dj"].strip()
+        selected_dj = next((dj for dj in public_djs() if dj["name"] == dj_name), None)
+        if selected_dj is None or not selected_dj.get("active", True):
+            return render_template(
+                "booking.html",
+                djs=djs,
+                success=False,
+                conflicts=[],
+                form_data=request.form,
+                booking_error="Deze DJ staat momenteel op inactief en kan niet geboekt worden.",
+            )
         conflicts = booking_conflicts(dj_name, event_date, start_time, end_time)
         if conflicts:
             return render_template(
@@ -477,6 +541,7 @@ def book():
                 success=False,
                 conflicts=conflicts,
                 form_data=request.form,
+                booking_error="",
             )
 
         booking = Booking(
@@ -516,6 +581,7 @@ def book():
         success=request.args.get("success") == "1",
         conflicts=[],
         form_data={},
+        booking_error="",
     )
 
 
@@ -566,6 +632,7 @@ def manager():
         pending=[serialize_booking(booking) for booking in pending],
         accepted=[serialize_booking(booking) for booking in accepted],
         applications=[serialize_application(application) for application in applications],
+        djs=public_djs(),
         total_bookings=Booking.query.count(),
         total_applications=DJApplication.query.count(),
     )
@@ -599,6 +666,7 @@ def accept_application(application_id):
     application.manager_note = request.form.get("manager_note", "").strip()
     application.decided_at = datetime.utcnow()
     db.session.commit()
+    sync_dj_status_records()
 
     send_notification(
         subject=f"Je DJ-aanmelding is geaccepteerd: {application.stage_name}",
@@ -635,6 +703,22 @@ def reject_application(application_id):
         ),
         to_address=application.email,
     )
+    return redirect(url_for("manager"))
+
+
+@app.route("/manager/djs/<slug>/toggle", methods=["POST"])
+@manager_required
+def toggle_dj_status(slug):
+    dj_status = DJStatus.query.filter_by(slug=slug).first()
+    if dj_status is None:
+        dj = find_public_dj(slug)
+        if dj is None:
+            abort(404)
+        dj_status = DJStatus(slug=slug, name=dj["name"], active=False, source=dj.get("source", "core"))
+        db.session.add(dj_status)
+    else:
+        dj_status.active = not dj_status.active
+    db.session.commit()
     return redirect(url_for("manager"))
 
 

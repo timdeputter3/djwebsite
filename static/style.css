@@ -364,6 +364,32 @@ main,
     padding: 20px;
 }
 
+.dj-status-row {
+    margin-bottom: 8px;
+}
+
+.dj-status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.dj-status-badge.is-active {
+    color: #0f120d;
+    background: #9ad67c;
+}
+
+.dj-status-badge.is-inactive {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+}
+
 .dj-card-copy h3,
 .dj-card-copy h2,
 .agenda-item h3,
@@ -833,6 +859,17 @@ textarea:focus {
 
 .calendar-modal-item-wide {
     grid-column: 1 / -1;
+}
+
+.disabled-button,
+.text-link.is-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.application-list {
+    display: grid;
+    gap: 16px;
 }
 
 .dj-detail-layout,

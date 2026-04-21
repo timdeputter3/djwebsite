@@ -18,6 +18,13 @@
     </section>
     {% endif %}
 
+    {% if booking_error %}
+    <section class="notice error-notice booking-conflict-notice">
+        <strong>Boeking niet mogelijk.</strong>
+        <span>{{ booking_error }}</span>
+    </section>
+    {% endif %}
+
     {% if conflicts %}
     <section class="notice error-notice booking-conflict-notice">
         <strong>Deze DJ heeft al een booking op dat moment.</strong>

@@ -91,6 +91,33 @@
 
     <section class="panel">
         <div class="panel-heading">
+            <h2>DJ statusbeheer</h2>
+            <p>Zet een DJ op actief of inactief om boekingen toe te laten of te blokkeren.</p>
+        </div>
+        <div class="application-list">
+            {% for dj in djs %}
+            <article class="manager-card">
+                <div>
+                    <p class="tag">{{ dj.genre }}</p>
+                    <h3>{{ dj.name }}</h3>
+                    <p>Status:
+                        <span class="dj-status-badge {% if dj.active %}is-active{% else %}is-inactive{% endif %}">
+                            {% if dj.active %}Actief{% else %}Inactief{% endif %}
+                        </span>
+                    </p>
+                </div>
+                <form method="POST" action="{{ url_for('toggle_dj_status', slug=dj.slug) }}">
+                    <button class="button {% if dj.active %}button-secondary{% else %}button-gold{% endif %}" type="submit">
+                        Zet op {% if dj.active %}inactief{% else %}actief{% endif %}
+                    </button>
+                </form>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-heading">
             <h2>DJ aanmeldingen</h2>
             <p>Nieuwe artiestenprofielen die zich via de website hebben aangemeld.</p>
         </div>

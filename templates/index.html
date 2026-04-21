@@ -82,6 +82,11 @@
                 </div>
                 <div class="dj-card-copy">
                     <p class="tag">{{ dj.genre }}</p>
+                    <div class="dj-status-row">
+                        <span class="dj-status-badge {% if dj.active %}is-active{% else %}is-inactive{% endif %}">
+                            {% if dj.active %}Actief{% else %}Inactief{% endif %}
+                        </span>
+                    </div>
                     <h3>{{ dj.name }}</h3>
                     <p>{{ dj.bio }}</p>
                     <small>{{ dj.gallery|length }} foto's beschikbaar</small>
