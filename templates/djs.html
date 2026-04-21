@@ -4,10 +4,10 @@
 <main class="page-stack">
     <section class="page-hero compact-hero">
         <p class="eyebrow">Curated roster</p>
-        <h1>Twee DJ-concepten met elk hun eigen vibe, professioneel gepresenteerd via Bassly.</h1>
+        <h1>Een groeiend roster van DJ-profielen, professioneel gepresenteerd via Bassly.</h1>
         <p class="lead">
-            DJ Vet &amp; Vriend en Vicle vormen vandaag de kern van Bassly. Zo houden we het aanbod overzichtelijk,
-            persoonlijk en sterk afgestemd op events in Kortrijk en omgeving.
+            Bassly bouwt aan een selectie DJ's met elk hun eigen sound, uitstraling en sterktes.
+            Zo blijft het aanbod persoonlijk, duidelijk en klaar om mee te groeien met verschillende soorten events.
         </p>
     </section>
 
@@ -37,13 +37,13 @@
                 </div>
                 <h2>{{ dj.name }}</h2>
                 <p>{{ dj.bio }}</p>
-                <p>{{ dj.gallery|length }} beelden tonen de sfeer, setup en energie van deze act.</p>
+                <p>{{ dj.gallery|length }} beelden tonen de sfeer, setup en uitstraling van dit profiel.</p>
                 <a class="text-link" href="{{ url_for('dj_detail', slug=dj.slug) }}">Volledig profiel</a>
                 {% if dj.source == 'application' %}
                 <small>Beschikbaarheid: {{ dj.availability|length }} geselecteerde dagen</small>
                 {% endif %}
                 {% if dj.active %}
-                <a class="text-link" href="{{ url_for('book') }}">Deze DJ aanvragen</a>
+                <a class="text-link" href="{{ url_for('book') }}">Vraag deze DJ aan</a>
                 {% else %}
                 <span class="text-link is-disabled">Momenteel niet boekbaar</span>
                 {% endif %}

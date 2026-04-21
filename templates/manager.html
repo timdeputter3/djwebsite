@@ -4,10 +4,10 @@
 <main class="page-stack">
     <section class="page-hero compact-hero">
         <p class="eyebrow">Manager dashboard</p>
-        <h1>Overzicht van pending aanvragen en bevestigde DJ-momenten.</h1>
+        <h1>Overzicht van nieuwe aanvragen, bevestigde bookings en groei van het roster.</h1>
         <p class="lead">
-            Gebruik deze pagina om nieuwe aanvragen te accepteren. Zodra een booking bevestigd is,
-            verhuist ze meteen naar de agenda van Bassly.
+            Gebruik deze pagina om bookings en DJ-aanmeldingen te beoordelen. Zodra een booking bevestigd is,
+            verschijnt ze automatisch in de agenda van Bassly.
         </p>
         <div class="stats-row">
             <article class="stat-pill">
@@ -119,7 +119,7 @@
     <section class="panel">
         <div class="panel-heading">
             <h2>DJ aanmeldingen</h2>
-            <p>Nieuwe artiestenprofielen die zich via de website hebben aangemeld.</p>
+            <p>Nieuwe artiestenprofielen die zich via de website hebben aangemeld voor opname in het roster.</p>
         </div>
         {% if applications %}
             {% for item in applications %}
@@ -165,7 +165,7 @@
         {% else %}
             <div class="empty-state">
                 <h3>Nog geen DJ-aanmeldingen</h3>
-                <p>Zodra iemand zich aanmeldt via de nieuwe onboardingpagina verschijnt die hier.</p>
+                <p>Zodra iemand zich aanmeldt via de DJ-aanmeldpagina verschijnt die hier.</p>
             </div>
         {% endif %}
     </section>

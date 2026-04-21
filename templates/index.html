@@ -5,15 +5,16 @@
     <section class="hero">
         <div class="hero-copy">
             <p class="eyebrow">Modern premium DJ booking</p>
-            <h1>Bassly maakt DJ boeken in Kortrijk stijlvol, snel en verrassend eenvoudig.</h1>
+            <h1>Bassly maakt DJ boeken stijlvol, overzichtelijk en verrassend eenvoudig.</h1>
             <p class="lead">
                 Bassly is gevestigd in Kortrijk en helpt organisatoren, bedrijven en feestlocaties
                 om zonder gedoe de juiste DJ te vinden voor hun event. We bouwen aan een platform
-                dat vandaag al lokaal ontzorgt, en later moeiteloos kan meegroeien naar een groter netwerk.
+                dat lokaal sterk verankerd is, maar tegelijk klaarstaat om te groeien met nieuwe DJ's,
+                nieuwe regio's en grotere producties.
             </p>
             <div class="hero-actions">
                 <a class="button button-gold" href="{{ url_for('book') }}">Boek jouw event</a>
-                <a class="button button-secondary" href="{{ url_for('djs') }}">Ontdek de line-up</a>
+                <a class="button button-secondary" href="{{ url_for('djs') }}">Ontdek het roster</a>
             </div>
             <div class="hero-metrics">
                 <article>
@@ -21,8 +22,8 @@
                     <span>Lokale focus met ruimte om slim op te schalen.</span>
                 </article>
                 <article>
-                    <strong>Echte line-up</strong>
-                    <span>Met DJ Vet &amp; Vriend en Vicle heb je meteen een sterke basis voor events in de regio.</span>
+                    <strong>Groeiend roster</strong>
+                    <span>Een zorgvuldig opgebouwde selectie DJ's met ruimte voor nieuwe profielen en verschillende stijlen.</span>
                 </article>
                 <article>
                     <strong>Heldere flow</strong>
@@ -69,8 +70,8 @@
     <section class="section section-alt">
         <div class="section-heading">
             <p class="eyebrow">Featured DJ's</p>
-            <h2>Een line-up met karakter</h2>
-            <p>Twee acts, elk met een eigen sfeer: een duo voor brede party-energie en een solo-DJ voor moderne clubvibes.</p>
+            <h2>Een roster met karakter</h2>
+            <p>Elke act op Bassly brengt een eigen sound, energie en uitstraling mee, zodat organisatoren gericht kunnen kiezen wat bij hun event past.</p>
         </div>
         <div class="dj-grid">
             {% for dj in djs %}
@@ -101,7 +102,7 @@
         <div class="section-heading">
             <p class="eyebrow">Live agenda</p>
             <h2>Geaccepteerde bookings</h2>
-            <p>Deze agenda toont enkel bookings die door Bassly bevestigd zijn en klaarstaan om uitgevoerd te worden.</p>
+            <p>Deze agenda toont alleen bookings die door Bassly bevestigd zijn en klaarstaan voor uitvoering.</p>
         </div>
         <div class="agenda-board">
             {% if agenda %}
@@ -118,7 +119,7 @@
             {% else %}
                 <article class="agenda-empty">
                     <h3>De agenda wordt opgebouwd</h3>
-                    <p>Nieuwe bookings verschijnen hier zodra jij ze als manager accepteert via de managerpagina.</p>
+                    <p>Nieuwe bookings verschijnen hier zodra ze bevestigd zijn via het managerdashboard.</p>
                 </article>
             {% endif %}
         </div>
