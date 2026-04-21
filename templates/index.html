@@ -85,6 +85,7 @@
                     <h3>{{ dj.name }}</h3>
                     <p>{{ dj.bio }}</p>
                     <small>{{ dj.gallery|length }} foto's beschikbaar</small>
+                    <a class="text-link" href="{{ url_for('dj_detail', slug=dj.slug) }}">Bekijk profiel</a>
                 </div>
             </article>
             {% endfor %}

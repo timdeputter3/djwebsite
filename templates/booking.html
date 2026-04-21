@@ -18,60 +18,81 @@
     </section>
     {% endif %}
 
+    {% if conflicts %}
+    <section class="notice error-notice booking-conflict-notice">
+        <strong>Deze DJ heeft al een booking op dat moment.</strong>
+        <span>Kies een ander tijdslot of een andere DJ. De conflicten staan hieronder.</span>
+    </section>
+    <section class="section">
+        <div class="agenda-board">
+            {% for item in conflicts %}
+            <article class="agenda-item">
+                <span class="agenda-date">{{ item.event_date }}</span>
+                <div>
+                    <h3>{{ item.dj }} | {{ item.status }}</h3>
+                    <p>{{ item.start_time }} - {{ item.end_time }} | {{ item.location }}</p>
+                    <small>{{ item.name }} | {{ item.event_type }}</small>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
     <section class="booking-layout">
         <form class="booking-form" method="POST">
             <div class="form-grid">
                 <label>
                     Naam
-                    <input type="text" name="name" required>
+                    <input type="text" name="name" value="{{ form_data.get('name', '') }}" required>
                 </label>
                 <label>
                     E-mail
-                    <input type="email" name="email" required>
+                    <input type="email" name="email" value="{{ form_data.get('email', '') }}" required>
                 </label>
                 <label>
                     Telefoon
-                    <input type="tel" name="phone" required>
+                    <input type="tel" name="phone" value="{{ form_data.get('phone', '') }}" required>
                 </label>
                 <label>
                     Bedrijf of organisatie
-                    <input type="text" name="company">
+                    <input type="text" name="company" value="{{ form_data.get('company', '') }}">
                 </label>
                 <label>
                     Type event
-                    <input type="text" name="event_type" placeholder="Corporate event, wedding, club night..." required>
+                    <input type="text" name="event_type" placeholder="Corporate event, wedding, club night..." value="{{ form_data.get('event_type', '') }}" required>
                 </label>
                 <label>
                     Gewenste DJ
                     <select name="dj" required>
                         {% for dj in djs %}
-                        <option>{{ dj.name }}</option>
+                        <option {% if form_data.get('dj') == dj.name %}selected{% endif %}>{{ dj.name }}</option>
                         {% endfor %}
                     </select>
                 </label>
                 <label>
                     Datum
-                    <input type="date" name="event_date" required>
+                    <input type="date" name="event_date" value="{{ form_data.get('event_date', '') }}" required>
                 </label>
                 <label>
                     Startuur
-                    <input type="time" name="start_time" required>
+                    <input type="time" name="start_time" value="{{ form_data.get('start_time', '') }}" required>
                 </label>
                 <label>
                     Einduur
-                    <input type="time" name="end_time" required>
+                    <input type="time" name="end_time" value="{{ form_data.get('end_time', '') }}" required>
                 </label>
                 <label>
                     Locatie
-                    <input type="text" name="location" placeholder="Kortrijk of regio..." required>
+                    <input type="text" name="location" placeholder="Kortrijk of regio..." value="{{ form_data.get('location', '') }}" required>
                 </label>
                 <label>
                     Aantal gasten
-                    <input type="number" name="guests" min="1" required>
+                    <input type="number" name="guests" min="1" value="{{ form_data.get('guests', '') }}" required>
                 </label>
                 <label class="full-width">
                     Extra briefing
-                    <textarea name="notes" rows="5" placeholder="Vertel iets over sfeer, doelgroep, muziekvoorkeur of timing."></textarea>
+                    <textarea name="notes" rows="5" placeholder="Vertel iets over sfeer, doelgroep, muziekvoorkeur of timing.">{{ form_data.get('notes', '') }}</textarea>
                 </label>
             </div>
             <button class="button button-gold" type="submit">Stuur bookingaanvraag</button>

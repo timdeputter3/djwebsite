@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Bassly | Contact{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="page-hero compact-hero">
+        <p class="eyebrow">Contact</p>
+        <h1>Wil je overleggen voor een event of Bassly beter leren kennen?</h1>
+        <p class="lead">
+            Gebruik de bookingflow voor concrete aanvragen, of neem contact op om samen te kijken
+            welke DJ en aanpak het best bij jouw event passen.
+        </p>
+    </section>
+
+    <section class="feature-grid">
+        <article class="feature-card">
+            <h3>Boek een DJ</h3>
+            <p>Voor directe aanvragen met datum, locatie en gewenste artiest.</p>
+            <a class="text-link" href="{{ url_for('book') }}">Naar bookingpagina</a>
+        </article>
+        <article class="feature-card">
+            <h3>Word DJ bij Bassly</h3>
+            <p>Stuur je profiel, genres, beelden en beschikbaarheid door.</p>
+            <a class="text-link" href="{{ url_for('join') }}">DJ aanmelden</a>
+        </article>
+        <article class="feature-card">
+            <h3>Manager contact</h3>
+            <p>Voorlopig loopt communicatie centraal via het Bassly management.</p>
+            <p>Stel je contactmail later in via `MANAGER_NOTIFY_EMAIL` en SMTP-config.</p>
+        </article>
+    </section>
+</main>
+{% endblock %}

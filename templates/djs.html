@@ -16,10 +16,14 @@
         <article class="dj-card dj-card-large">
             <div class="dj-gallery">
                 <div class="dj-gallery-lead">
+                    {% if dj.gallery %}
                     <img src="{{ url_for('static', filename=dj.gallery[0]) }}" alt="{{ dj.name }}">
+                    {% else %}
+                    <div class="dj-gallery-empty">Geen foto beschikbaar</div>
+                    {% endif %}
                 </div>
                 <div class="dj-gallery-strip">
-                    {% for image in dj.gallery[1:] %}
+                    {% for image in dj.gallery[1:] if dj.gallery %}
                     <img src="{{ url_for('static', filename=image) }}" alt="{{ dj.name }}">
                     {% endfor %}
                 </div>
@@ -29,6 +33,10 @@
                 <h2>{{ dj.name }}</h2>
                 <p>{{ dj.bio }}</p>
                 <p>{{ dj.gallery|length }} beelden tonen de sfeer, setup en energie van deze act.</p>
+                <a class="text-link" href="{{ url_for('dj_detail', slug=dj.slug) }}">Volledig profiel</a>
+                {% if dj.source == 'application' %}
+                <small>Beschikbaarheid: {{ dj.availability|length }} geselecteerde dagen</small>
+                {% endif %}
                 <a class="text-link" href="{{ url_for('book') }}">Deze DJ aanvragen</a>
             </div>
         </article>

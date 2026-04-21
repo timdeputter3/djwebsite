@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Bassly{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Bassly maakt DJ boeken in Kortrijk en omgeving overzichtelijk, professioneel en snel.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}">
+    <meta property="og:type" content="website">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -22,6 +26,7 @@
                 <a href="{{ url_for('djs') }}">DJ's</a>
                 <a href="{{ url_for('join') }}">DJ aanmelden</a>
                 <a href="{{ url_for('book') }}">Boeken</a>
+                <a href="{{ url_for('contact') }}">Contact</a>
                 {% if manager_logged_in %}
                 <a href="{{ url_for('manager') }}">Manager</a>
                 <a href="{{ url_for('manager_logout') }}">Logout</a>

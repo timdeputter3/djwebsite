@@ -22,6 +22,14 @@
                 <strong>{{ total_bookings }}</strong>
                 <span>Totaal ontvangen</span>
             </article>
+            <article class="stat-pill">
+                <strong>{{ total_applications }}</strong>
+                <span>DJ aanmeldingen</span>
+            </article>
+        </div>
+        <div class="hero-actions">
+            <a class="button button-secondary" href="{{ url_for('export_bookings') }}">Export bookings CSV</a>
+            <a class="button button-secondary" href="{{ url_for('export_applications') }}">Export DJ-aanmeldingen CSV</a>
         </div>
     </section>
 
@@ -90,7 +98,7 @@
             {% for item in applications %}
             <article class="application-card">
                 <div class="application-copy">
-                    <p class="tag">{{ item.city }} | {{ item.genres }}</p>
+                    <p class="tag">{{ item.city }} | {{ item.genres }} | {{ item.status }}</p>
                     <h3>{{ item.stage_name }}</h3>
                     <p>{{ item.contact_name }} | {{ item.email }} | {{ item.phone }}</p>
                     <p>{{ item.music_style }}</p>
@@ -102,7 +110,10 @@
                     <small>Setup: {{ item.equipment }}</small>
                     {% endif %}
                     {% if item.availability %}
-                    <small>Beschikbaarheid: {{ item.availability }}</small>
+                    <small>Beschikbare dagen: {{ item.availability|join(', ') }}</small>
+                    {% endif %}
+                    {% if item.manager_note %}
+                    <small>Manager notitie: {{ item.manager_note }}</small>
                     {% endif %}
                 </div>
                 <div class="application-gallery">
@@ -110,6 +121,18 @@
                     <img src="{{ url_for('static', filename=photo) }}" alt="{{ item.stage_name }}">
                     {% endfor %}
                 </div>
+                {% if item.status == 'new' %}
+                <div class="application-actions">
+                    <form method="POST" action="{{ url_for('accept_application', application_id=item.id) }}">
+                        <textarea name="manager_note" rows="3" placeholder="Optionele notitie voor acceptatie"></textarea>
+                        <button class="button button-gold" type="submit">Accepteren</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('reject_application', application_id=item.id) }}">
+                        <textarea name="manager_note" rows="3" placeholder="Optionele notitie voor weigering"></textarea>
+                        <button class="button button-secondary" type="submit">Weigeren</button>
+                    </form>
+                </div>
+                {% endif %}
             </article>
             {% endfor %}
         {% else %}

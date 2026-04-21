@@ -1,13 +1,28 @@
+import csv
+import io
 import json
 import os
+import smtplib
 from calendar import month_name, monthrange
 from datetime import datetime, timedelta
+from email.message import EmailMessage
 from functools import wraps
 from pathlib import Path
 from uuid import uuid4
 
-from flask import Flask, abort, redirect, render_template, request, session, url_for
+from flask import (
+    Flask,
+    Response,
+    abort,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect, text
+from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -28,8 +43,25 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "bassly-dev-secret-chang
 app.config["MAX_CONTENT_LENGTH"] = 24 * 1024 * 1024
 
 db = SQLAlchemy(app)
-MANAGER_PASSWORD = os.environ.get("MANAGER_PASSWORD", "Moustache09")
+
+MANAGER_USERNAME = os.environ.get("MANAGER_USERNAME", "managertim")
+MANAGER_PASSWORD_RAW = os.environ.get("MANAGER_PASSWORD", "managertim132")
+MANAGER_PASSWORD_HASH = generate_password_hash(MANAGER_PASSWORD_RAW)
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+
+SMTP_HOST = os.environ.get("SMTP_HOST")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USERNAME or "")
+MANAGER_NOTIFY_EMAIL = os.environ.get("MANAGER_NOTIFY_EMAIL")
+
+
+def slugify_name(value):
+    slug = "".join(char.lower() if char.isalnum() else "-" for char in value)
+    slug = "-".join(part for part in slug.split("-") if part)
+    return slug or uuid4().hex[:8]
+
 
 def build_gallery(folder_name):
     folder = DJ_IMAGE_ROOT / folder_name
@@ -39,7 +71,7 @@ def build_gallery(folder_name):
     files = sorted(
         [
             file for file in folder.iterdir()
-            if file.is_file() and file.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+            if file.is_file() and file.suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
         ],
         key=lambda file: file.name.lower(),
     )
@@ -49,15 +81,23 @@ def build_gallery(folder_name):
 DJ_PROFILES = [
     {
         "name": "DJ Vet & Vriend",
+        "slug": "dj-vet-vriend",
         "genre": "Open format / all-round party / student events",
         "bio": "Een energiek duo uit de regio dat vlot schakelt tussen meezingers, party classics en moderne tracks om elk publiek meteen mee te krijgen.",
         "gallery": build_gallery("vet-vriend"),
+        "availability": [],
+        "socials": "",
+        "source": "core",
     },
     {
         "name": "Vicle",
+        "slug": "vicle",
         "genre": "Club / house / late-night energy",
         "bio": "Brengt een frisse, hedendaagse sound met clubgevoel, sterke opbouw en de juiste energie voor avonden die mogen blijven hangen.",
         "gallery": build_gallery("vicle"),
+        "availability": [],
+        "socials": "",
+        "source": "core",
     },
 ]
 
@@ -99,10 +139,74 @@ class DJApplication(db.Model):
     bio = db.Column(db.Text, nullable=False)
     photo_paths = db.Column(db.Text, nullable=False, default="[]")
     status = db.Column(db.String(20), nullable=False, default="new")
+    manager_note = db.Column(db.Text, nullable=True)
+    decided_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 
+def parse_availability(value):
+    if not value:
+        return []
+    try:
+        parsed = json.loads(value)
+        if isinstance(parsed, list):
+            return sorted(parsed)
+    except json.JSONDecodeError:
+        pass
+    return [value]
+
+
+def allowed_image(filename):
+    return Path(filename).suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
+
+
+def save_application_photos(files, application_id):
+    saved_paths = []
+    target_dir = APPLICATION_UPLOAD_ROOT / application_id
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    for index, photo in enumerate(files, start=1):
+        if not photo or not photo.filename or not allowed_image(photo.filename):
+            continue
+
+        safe_name = secure_filename(photo.filename)
+        extension = Path(safe_name).suffix.lower()
+        filename = f"{index:02d}-{uuid4().hex[:8]}{extension}"
+        destination = target_dir / filename
+        photo.save(destination)
+        saved_paths.append(f"uploads/dj-applications/{application_id}/{filename}")
+
+    return saved_paths
+
+
+def send_notification(subject, body, to_address=None):
+    recipient = to_address or MANAGER_NOTIFY_EMAIL
+    if not (SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD and SMTP_FROM and recipient):
+        return False
+
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = SMTP_FROM
+    message["To"] = recipient
+    message.set_content(body)
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.send_message(message)
+    return True
+
+
+def booking_bounds(date_value, start_time_value, end_time_value):
+    start_at = datetime.combine(date_value, start_time_value)
+    end_at = datetime.combine(date_value, end_time_value)
+    if end_at <= start_at:
+        end_at += timedelta(days=1)
+    return start_at, end_at
+
+
 def serialize_booking(booking):
+    start_at, end_at = booking_bounds(booking.event_date, booking.start_time, booking.end_time)
     return {
         "id": booking.public_id,
         "name": booking.name,
@@ -120,6 +224,7 @@ def serialize_booking(booking):
         "status": booking.status,
         "created_at": booking.created_at.strftime("%Y-%m-%d %H:%M"),
         "accepted_at": booking.accepted_at.strftime("%Y-%m-%d %H:%M") if booking.accepted_at else "",
+        "overnight": end_at.date() != start_at.date(),
     }
 
 
@@ -136,43 +241,36 @@ def serialize_application(application):
         "experience": application.experience,
         "equipment": application.equipment or "",
         "socials": application.socials or "",
-        "availability": application.availability or "",
+        "availability": parse_availability(application.availability),
         "bio": application.bio,
         "photo_paths": json.loads(application.photo_paths or "[]"),
         "status": application.status,
+        "manager_note": application.manager_note or "",
         "created_at": application.created_at.strftime("%Y-%m-%d %H:%M"),
+        "decided_at": application.decided_at.strftime("%Y-%m-%d %H:%M") if application.decided_at else "",
     }
 
 
-def allowed_image(filename):
-    return Path(filename).suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
+def ensure_schema():
+    inspector = inspect(db.engine)
+    if "dj_application" not in inspector.get_table_names():
+        return
 
+    columns = {column["name"] for column in inspector.get_columns("dj_application")}
+    statements = []
+    if "manager_note" not in columns:
+        statements.append("ALTER TABLE dj_application ADD COLUMN manager_note TEXT")
+    if "decided_at" not in columns:
+        statements.append("ALTER TABLE dj_application ADD COLUMN decided_at DATETIME")
 
-def save_application_photos(files, application_id):
-    saved_paths = []
-    target_dir = APPLICATION_UPLOAD_ROOT / application_id
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    for index, photo in enumerate(files, start=1):
-        if not photo or not photo.filename:
-            continue
-        if not allowed_image(photo.filename):
-            continue
-
-        safe_name = secure_filename(photo.filename)
-        extension = Path(safe_name).suffix.lower()
-        filename = f"{index:02d}-{uuid4().hex[:8]}{extension}"
-        destination = target_dir / filename
-        photo.save(destination)
-        saved_paths.append(f"uploads/dj-applications/{application_id}/{filename}")
-
-    return saved_paths
+    if statements:
+        with db.engine.begin() as connection:
+            for statement in statements:
+                connection.execute(text(statement))
 
 
 def migrate_legacy_bookings():
-    if not LEGACY_BOOKINGS_FILE.exists():
-        return
-    if Booking.query.first() is not None:
+    if not LEGACY_BOOKINGS_FILE.exists() or Booking.query.first() is not None:
         return
 
     legacy_bookings = json.loads(LEGACY_BOOKINGS_FILE.read_text(encoding="utf-8"))
@@ -204,6 +302,7 @@ def migrate_legacy_bookings():
 def bootstrap_database():
     APPLICATION_UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
     db.create_all()
+    ensure_schema()
     migrate_legacy_bookings()
 
 
@@ -216,71 +315,55 @@ def accepted_bookings(limit=None):
     return [serialize_booking(booking) for booking in bookings]
 
 
-def add_month_bucket(months, date_value):
-    month_key = (date_value.year, date_value.month)
-    if month_key not in months:
-        first_weekday, total_days = monthrange(date_value.year, date_value.month)
-        months[month_key] = {
-            "label": f"{month_name[date_value.month]} {date_value.year}",
-            "year": date_value.year,
-            "month": date_value.month,
-            "total_days": total_days,
-            "first_weekday": first_weekday,
-            "days": [
-                {
-                    "day": day,
-                    "weekday": ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"][
-                        datetime(date_value.year, date_value.month, day).weekday()
-                    ],
-                }
-                for day in range(1, total_days + 1)
-            ],
-            "timeline_events": [],
-        }
-    return months[month_key]
-
-
-def build_agenda_months():
-    bookings = accepted_bookings()
-    months = {}
-    for booking in bookings:
-        start_date = datetime.strptime(booking["event_date"], "%Y-%m-%d").date()
-        overnight = booking["end_time"] <= booking["start_time"]
-        end_date = start_date + timedelta(days=1) if overnight else start_date
-
-        current_date = start_date
-        while current_date <= end_date:
-            month_bucket = add_month_bucket(months, current_date)
-            month_start = current_date.replace(day=1)
-            month_end = current_date.replace(day=month_bucket["total_days"])
-
-            segment_start = max(start_date, month_start)
-            segment_end = min(end_date, month_end)
-
-            month_bucket["timeline_events"].append(
-                {
-                    "id": booking["id"],
-                    "dj": booking["dj"],
-                    "location": booking["location"],
-                    "start_time": booking["start_time"],
-                    "end_time": booking["end_time"],
-                    "event_type": booking["event_type"],
-                    "start_day": segment_start.day,
-                    "end_day": segment_end.day,
-                    "starts_here": segment_start == start_date,
-                    "ends_here": segment_end == end_date,
-                    "is_overnight": overnight,
-                }
-            )
-
-            current_date = month_end + timedelta(days=1)
-
-    for month in months.values():
-        month["timeline_events"].sort(
-            key=lambda item: (item["start_day"], item["start_time"], item["dj"])
+def public_djs():
+    accepted_applications = (
+        DJApplication.query.filter_by(status="accepted")
+        .order_by(DJApplication.created_at.desc())
+        .all()
+    )
+    dynamic = []
+    for application in accepted_applications:
+        photos = json.loads(application.photo_paths or "[]")
+        dynamic.append(
+            {
+                "name": application.stage_name,
+                "slug": slugify_name(application.stage_name),
+                "genre": application.genres,
+                "bio": application.bio,
+                "gallery": photos,
+                "availability": parse_availability(application.availability),
+                "socials": application.socials or "",
+                "music_style": application.music_style,
+                "experience": application.experience,
+                "city": application.city,
+                "source": "application",
+            }
         )
+    return DJ_PROFILES + dynamic
 
-    return [months[key] for key in sorted(months)]
+
+def find_public_dj(slug):
+    for dj in public_djs():
+        if dj.get("slug") == slug:
+            return dj
+    return None
+
+
+def booking_conflicts(dj_name, event_date, start_time, end_time, exclude_public_id=None):
+    requested_start, requested_end = booking_bounds(event_date, start_time, end_time)
+    candidates = Booking.query.filter(
+        Booking.dj == dj_name,
+        Booking.status.in_(["pending", "accepted"]),
+    ).all()
+
+    conflicts = []
+    for booking in candidates:
+        if exclude_public_id and booking.public_id == exclude_public_id:
+            continue
+        existing_start, existing_end = booking_bounds(booking.event_date, booking.start_time, booking.end_time)
+        if requested_start < existing_end and requested_end > existing_start:
+            conflicts.append(serialize_booking(booking))
+    return conflicts
 
 
 def is_manager_logged_in():
@@ -299,7 +382,10 @@ def manager_required(view_func):
 
 @app.context_processor
 def inject_global_state():
-    return {"manager_logged_in": is_manager_logged_in()}
+    return {
+        "manager_logged_in": is_manager_logged_in(),
+        "manager_username": MANAGER_USERNAME,
+    }
 
 
 with app.app_context():
@@ -309,12 +395,21 @@ with app.app_context():
 @app.route("/")
 def home():
     agenda = accepted_bookings(limit=4)
-    return render_template("index.html", djs=DJ_PROFILES, agenda=agenda)
+    djs = public_djs()
+    return render_template("index.html", djs=djs, agenda=agenda)
 
 
 @app.route("/djs")
 def djs():
-    return render_template("djs.html", djs=DJ_PROFILES)
+    return render_template("djs.html", djs=public_djs())
+
+
+@app.route("/djs/<slug>")
+def dj_detail(slug):
+    dj = find_public_dj(slug)
+    if dj is None:
+        abort(404)
+    return render_template("dj_detail.html", dj=dj)
 
 
 @app.route("/agenda")
@@ -327,6 +422,9 @@ def join():
     if request.method == "POST":
         application_id = uuid4().hex[:12]
         photo_paths = save_application_photos(request.files.getlist("photos"), application_id)
+        availability_dates = sorted(
+            [item.strip() for item in request.form.get("availability_dates", "").split(",") if item.strip()]
+        )
 
         application = DJApplication(
             public_id=application_id,
@@ -340,12 +438,24 @@ def join():
             experience=request.form["experience"].strip(),
             equipment=request.form.get("equipment", "").strip(),
             socials=request.form.get("socials", "").strip(),
-            availability=request.form.get("availability", "").strip(),
+            availability=json.dumps(availability_dates),
             bio=request.form["bio"].strip(),
             photo_paths=json.dumps(photo_paths),
+            status="new",
         )
         db.session.add(application)
         db.session.commit()
+
+        send_notification(
+            subject=f"Nieuwe DJ-aanmelding: {application.stage_name}",
+            body=(
+                f"Nieuwe DJ-aanmelding ontvangen.\n\n"
+                f"Naam: {application.stage_name}\n"
+                f"Contact: {application.contact_name}\n"
+                f"E-mail: {application.email}\n"
+                f"Genres: {application.genres}\n"
+            ),
+        )
         return redirect(url_for("join", success="1"))
 
     return render_template("join.html", success=request.args.get("success") == "1")
@@ -353,7 +463,22 @@ def join():
 
 @app.route("/book", methods=["GET", "POST"])
 def book():
+    djs = public_djs()
     if request.method == "POST":
+        event_date = datetime.strptime(request.form["event_date"], "%Y-%m-%d").date()
+        start_time = datetime.strptime(request.form["start_time"], "%H:%M").time()
+        end_time = datetime.strptime(request.form["end_time"], "%H:%M").time()
+        dj_name = request.form["dj"].strip()
+        conflicts = booking_conflicts(dj_name, event_date, start_time, end_time)
+        if conflicts:
+            return render_template(
+                "booking.html",
+                djs=djs,
+                success=False,
+                conflicts=conflicts,
+                form_data=request.form,
+            )
+
         booking = Booking(
             public_id=datetime.utcnow().strftime("%y%m%d%H%M%S%f")[-10:],
             name=request.form["name"].strip(),
@@ -361,33 +486,53 @@ def book():
             phone=request.form["phone"].strip(),
             company=request.form.get("company", "").strip(),
             event_type=request.form["event_type"].strip(),
-            event_date=datetime.strptime(request.form["event_date"], "%Y-%m-%d").date(),
-            start_time=datetime.strptime(request.form["start_time"], "%H:%M").time(),
-            end_time=datetime.strptime(request.form["end_time"], "%H:%M").time(),
+            event_date=event_date,
+            start_time=start_time,
+            end_time=end_time,
             location=request.form["location"].strip(),
             guests=int(request.form["guests"]),
-            dj=request.form["dj"].strip(),
+            dj=dj_name,
             notes=request.form.get("notes", "").strip(),
             status="pending",
         )
         db.session.add(booking)
         db.session.commit()
+
+        send_notification(
+            subject=f"Nieuwe booking voor {booking.dj}",
+            body=(
+                f"Nieuwe bookingaanvraag ontvangen.\n\n"
+                f"DJ: {booking.dj}\n"
+                f"Datum: {booking.event_date}\n"
+                f"Tijd: {booking.start_time.strftime('%H:%M')} - {booking.end_time.strftime('%H:%M')}\n"
+                f"Boeker: {booking.name}\n"
+            ),
+        )
         return redirect(url_for("book", success="1"))
 
     return render_template(
         "booking.html",
-        djs=DJ_PROFILES,
+        djs=djs,
         success=request.args.get("success") == "1",
+        conflicts=[],
+        form_data={},
     )
+
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
 
 
 @app.route("/manager/login", methods=["GET", "POST"])
 def manager_login():
     error = False
     if request.method == "POST":
+        username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        if password == MANAGER_PASSWORD:
+        if username == MANAGER_USERNAME and check_password_hash(MANAGER_PASSWORD_HASH, password):
             session["manager_authenticated"] = True
+            session["manager_username"] = username
             destination = request.args.get("next") or url_for("manager")
             return redirect(destination)
         error = True
@@ -398,6 +543,7 @@ def manager_login():
 @app.route("/manager/logout")
 def manager_logout():
     session.pop("manager_authenticated", None)
+    session.pop("manager_username", None)
     return redirect(url_for("home"))
 
 
@@ -414,15 +560,14 @@ def manager():
         .order_by(Booking.event_date.asc(), Booking.start_time.asc())
         .all()
     )
+    applications = DJApplication.query.order_by(DJApplication.created_at.desc()).all()
     return render_template(
         "manager.html",
         pending=[serialize_booking(booking) for booking in pending],
         accepted=[serialize_booking(booking) for booking in accepted],
-        applications=[
-            serialize_application(application)
-            for application in DJApplication.query.order_by(DJApplication.created_at.desc()).all()
-        ],
+        applications=[serialize_application(application) for application in applications],
         total_bookings=Booking.query.count(),
+        total_applications=DJApplication.query.count(),
     )
 
 
@@ -433,10 +578,118 @@ def accept_booking(booking_id):
     if booking is None:
         abort(404)
 
+    conflicts = booking_conflicts(booking.dj, booking.event_date, booking.start_time, booking.end_time, exclude_public_id=booking.public_id)
+    if conflicts:
+        return redirect(url_for("manager", booking_conflict=booking.public_id))
+
     booking.status = "accepted"
     booking.accepted_at = datetime.utcnow()
     db.session.commit()
     return redirect(url_for("manager"))
+
+
+@app.route("/manager/applications/<application_id>/accept", methods=["POST"])
+@manager_required
+def accept_application(application_id):
+    application = DJApplication.query.filter_by(public_id=application_id).first()
+    if application is None:
+        abort(404)
+
+    application.status = "accepted"
+    application.manager_note = request.form.get("manager_note", "").strip()
+    application.decided_at = datetime.utcnow()
+    db.session.commit()
+
+    send_notification(
+        subject=f"Je DJ-aanmelding is geaccepteerd: {application.stage_name}",
+        body=(
+            f"Proficiat, je Bassly-aanmelding werd geaccepteerd.\n\n"
+            f"DJ: {application.stage_name}\n"
+            f"Status: geaccepteerd\n"
+            f"Notitie: {application.manager_note or 'Geen extra notitie'}\n"
+        ),
+        to_address=application.email,
+    )
+    return redirect(url_for("manager"))
+
+
+@app.route("/manager/applications/<application_id>/reject", methods=["POST"])
+@manager_required
+def reject_application(application_id):
+    application = DJApplication.query.filter_by(public_id=application_id).first()
+    if application is None:
+        abort(404)
+
+    application.status = "rejected"
+    application.manager_note = request.form.get("manager_note", "").strip()
+    application.decided_at = datetime.utcnow()
+    db.session.commit()
+
+    send_notification(
+        subject=f"Update over je DJ-aanmelding bij Bassly",
+        body=(
+            f"Bedankt voor je aanmelding bij Bassly.\n\n"
+            f"DJ: {application.stage_name}\n"
+            f"Status: geweigerd\n"
+            f"Notitie: {application.manager_note or 'Geen extra notitie'}\n"
+        ),
+        to_address=application.email,
+    )
+    return redirect(url_for("manager"))
+
+
+@app.route("/manager/export/bookings.csv")
+@manager_required
+def export_bookings():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "name", "email", "phone", "dj", "date", "start", "end", "status", "location"])
+    for booking in Booking.query.order_by(Booking.event_date.asc(), Booking.start_time.asc()).all():
+        writer.writerow(
+            [
+                booking.public_id,
+                booking.name,
+                booking.email,
+                booking.phone,
+                booking.dj,
+                booking.event_date.isoformat(),
+                booking.start_time.strftime("%H:%M"),
+                booking.end_time.strftime("%H:%M"),
+                booking.status,
+                booking.location,
+            ]
+        )
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=bookings.csv"},
+    )
+
+
+@app.route("/manager/export/applications.csv")
+@manager_required
+def export_applications():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "stage_name", "contact_name", "email", "city", "genres", "status", "created_at"])
+    for application in DJApplication.query.order_by(DJApplication.created_at.desc()).all():
+        writer.writerow(
+            [
+                application.public_id,
+                application.stage_name,
+                application.contact_name,
+                application.email,
+                application.city,
+                application.genres,
+                application.status,
+                application.created_at.strftime("%Y-%m-%d %H:%M"),
+            ]
+        )
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=dj-applications.csv"},
+    )
 
 
 if __name__ == "__main__":
