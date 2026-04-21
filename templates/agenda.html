@@ -10,7 +10,7 @@
                 <button class="calendar-icon-button" type="button" data-action="next" aria-label="Volgende periode">&#8250;</button>
                 <div class="calendar-current">
                     <h2 id="calendar-title">Agenda</h2>
-                    <span id="calendar-subtitle">Bassly planning</span>
+                    <span id="calendar-subtitle">Bassly planningsoverzicht</span>
                 </div>
             </div>
             <div class="calendar-view-switch">
@@ -40,7 +40,7 @@
         <div class="calendar-modal-backdrop" data-close-modal="true"></div>
         <div class="calendar-modal-card" role="dialog" aria-modal="true" aria-labelledby="calendar-modal-title">
             <button class="calendar-modal-close" type="button" data-close-modal="true" aria-label="Sluiten">&times;</button>
-            <p class="eyebrow">Booking details</p>
+            <p class="eyebrow">Bookingdetails</p>
             <h2 id="calendar-modal-title">Booking</h2>
             <div class="calendar-modal-grid" id="calendar-modal-content"></div>
         </div>
@@ -66,8 +66,8 @@
     const weekdayNames = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
     const djColorMap = {
-        "DJ Vet & Vriend": "var(--calendar-rose)",
-        "Vicle": "var(--calendar-gold)"
+        "DJ Vet & Vriend": "var(--calendar-gold)",
+        "Vicle": "var(--calendar-blue)"
     };
 
     const state = {
@@ -259,7 +259,7 @@
         gridEnd.setDate(gridEnd.getDate() + 6);
 
         titleEl.textContent = `${monthNames[state.current.getMonth()]} ${state.current.getFullYear()}`;
-        subtitleEl.textContent = "Maandweergave";
+        subtitleEl.textContent = "Maandoverzicht";
 
         const days = [];
         for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
@@ -432,7 +432,7 @@
         }));
 
         titleEl.textContent = `${weekdayNames[(state.current.getDay() + 6) % 7]} ${state.current.getDate()} ${monthNames[state.current.getMonth()]} ${state.current.getFullYear()}`;
-        subtitleEl.textContent = "Dagweergave";
+        subtitleEl.textContent = "Dagoverzicht";
 
         renderEl.innerHTML = `
             <div class="calendar-time-view day-mode">

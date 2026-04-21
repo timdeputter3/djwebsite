@@ -4,19 +4,19 @@
 <main class="page-stack">
     <section class="login-shell">
         <div class="page-hero compact-hero">
-            <p class="eyebrow">Privé toegang</p>
-            <h1>Manager agenda alleen zichtbaar na login.</h1>
+            <p class="eyebrow">Prive toegang</p>
+            <h1>Het managerdashboard is alleen zichtbaar na login.</h1>
             <p class="lead">
-                Deze pagina is enkel bedoeld voor jou als beheerder. Na login kan je aanvragen accepteren
-                en de interne planning beheren.
+                Deze omgeving is alleen bedoeld voor beheer. Na login kan je bookings beoordelen,
+                DJ-profielen beheren en de planning opvolgen.
             </p>
         </div>
 
         <form class="booking-form login-form" method="POST">
             {% if error %}
             <div class="notice error-notice">
-                <strong>Fout wachtwoord.</strong>
-                <span>Probeer opnieuw met jouw manager-wachtwoord.</span>
+                <strong>Login mislukt.</strong>
+                <span>Controleer je gebruikersnaam en wachtwoord en probeer opnieuw.</span>
             </div>
             {% endif %}
             <label>
@@ -24,10 +24,10 @@
                 <input type="text" name="username" value="{{ manager_username }}" required>
             </label>
             <label>
-                Manager wachtwoord
+                Wachtwoord
                 <input type="password" name="password" required>
             </label>
-            <button class="button button-gold" type="submit">Inloggen</button>
+            <button class="button button-gold" type="submit">Open dashboard</button>
         </form>
     </section>
 </main>

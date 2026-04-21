@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Bassly | {{ dj.name }}{% endblock %}
-{% block meta_description %}Bekijk het DJ-profiel van {{ dj.name }} op Bassly, inclusief stijl, galerij en beschikbaarheid.{% endblock %}
+{% block meta_description %}Ontdek het Bassly-profiel van {{ dj.name }}, met sfeerbeelden, muzikale richting en praktische info voor organisatoren.{% endblock %}
 {% block content %}
 <main class="page-stack">
     <section class="page-hero compact-hero">
@@ -15,16 +15,16 @@
         <div class="stats-row">
             <article class="stat-pill">
                 <strong>{{ dj.genre }}</strong>
-                <span>Genres en richting</span>
+                <span>Genre en muzikale richting</span>
             </article>
             <article class="stat-pill">
                 <strong>{{ dj.gallery|length }}</strong>
-                <span>Foto's in profiel</span>
+                <span>Beelden in dit profiel</span>
             </article>
             {% if dj.source == 'application' %}
             <article class="stat-pill">
                 <strong>{{ dj.availability|length }}</strong>
-                <span>Beschikbare dagen</span>
+                <span>Beschikbaarheidsdagen</span>
             </article>
             {% endif %}
         </div>
@@ -34,7 +34,7 @@
         <div class="panel">
             <div class="panel-heading">
                 <h2>Galerij</h2>
-                <p>Beelden die de sfeer en uitstraling van deze DJ tonen.</p>
+                <p>Een visuele indruk van de sfeer, energie en uitstraling van dit DJ-profiel.</p>
             </div>
             <div class="dj-gallery-strip detail-gallery">
                 {% for image in dj.gallery %}
@@ -45,17 +45,17 @@
 
         <aside class="panel">
             <div class="panel-heading">
-                <h2>Profielinformatie</h2>
-                <p>Snelle samenvatting voor organisatoren en venues.</p>
+                <h2>Profieloverzicht</h2>
+                <p>Een heldere samenvatting voor organisatoren, locaties en merken.</p>
             </div>
             <div class="profile-facts">
                 <article>
-                    <strong>Genres</strong>
+                    <strong>Genre</strong>
                     <span>{{ dj.genre }}</span>
                 </article>
                 {% if dj.music_style %}
                 <article>
-                    <strong>Muzikale richting</strong>
+                    <strong>Sound en stijl</strong>
                     <span>{{ dj.music_style }}</span>
                 </article>
                 {% endif %}
@@ -81,7 +81,7 @@
             {% if dj.availability %}
             <div class="panel-heading">
                 <h2>Beschikbaarheid</h2>
-                <p>Door de DJ geselecteerde dagen.</p>
+                <p>De dagen die door dit profiel als beschikbaar werden doorgegeven.</p>
             </div>
             <div class="availability-tags">
                 {% for date in dj.availability %}
@@ -90,9 +90,9 @@
             </div>
             {% endif %}
             {% if dj.active %}
-            <a class="button button-gold" href="{{ url_for('book') }}">Boek deze DJ</a>
+            <a class="button button-gold" href="{{ url_for('book') }}">Vraag dit profiel aan</a>
             {% else %}
-            <span class="button button-secondary disabled-button">Momenteel niet boekbaar</span>
+            <span class="button button-secondary disabled-button">Dit profiel is momenteel niet boekbaar</span>
             {% endif %}
         </aside>
     </section>
