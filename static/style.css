@@ -1,19 +1,25 @@
 :root {
     --bg: #0b0b0d;
     --bg-soft: #161519;
-    --panel: rgba(20, 18, 17, 0.88);
+    --panel: rgba(20, 18, 17, 0.92);
     --panel-strong: #15120e;
     --gold: #d9b56d;
     --gold-soft: #f2deae;
     --text: #f7f2e8;
-    --muted: #b9ae9a;
-    --line: rgba(217, 181, 109, 0.18);
+    --muted: #d0c4b0;
+    --muted-soft: #aa9e8a;
+    --line: rgba(217, 181, 109, 0.24);
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     --radius: 28px;
-    --calendar-gold: #e3a243;
-    --calendar-rose: #6d80cf;
-    --calendar-teal: #49a59b;
-    --calendar-blue: #6d80cf;
+    --calendar-gold: #e6a64d;
+    --calendar-teal: #67c1b7;
+    --calendar-blue: #8db7ff;
+    --success: #9ad67c;
+    --success-ink: #10150b;
+    --inactive-bg: rgba(255, 255, 255, 0.12);
+    --inactive-border: rgba(255, 255, 255, 0.15);
+    --danger-bg: rgba(130, 36, 26, 0.44);
+    --danger-border: rgba(232, 127, 95, 0.28);
 }
 
 * {
@@ -111,6 +117,31 @@ h3 {
     gap: 18px;
     flex-wrap: wrap;
     color: var(--muted);
+    align-items: center;
+}
+
+.site-nav a {
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.site-nav a:hover {
+    border-color: var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-1px);
+}
+
+.site-nav a.is-current {
+    color: #140f08;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, #f0d79f, #b98f49);
+}
+
+.site-nav .nav-utility {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .site-nav a:hover,
@@ -173,6 +204,17 @@ main,
     color: var(--muted);
 }
 
+.panel-heading p,
+.calendar-current span,
+.calendar-modal-item span,
+.application-copy small,
+.application-copy p,
+.calendar-week-day span,
+.calendar-month-day span,
+.calendar-hour-labels span {
+    color: var(--muted-soft);
+}
+
 .eyebrow,
 .tag {
     margin: 0 0 12px;
@@ -180,6 +222,7 @@ main,
     text-transform: uppercase;
     letter-spacing: 0.24em;
     font-size: 0.76rem;
+    font-weight: 700;
 }
 
 .hero-actions,
@@ -213,6 +256,7 @@ main,
 .button-secondary {
     border-color: var(--line);
     background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
 }
 
 .hero-metrics,
@@ -241,7 +285,7 @@ main,
     padding: 18px;
     border-radius: 22px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.02);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
 }
 
 .hero-panel {
@@ -381,13 +425,14 @@ main,
 }
 
 .dj-status-badge.is-active {
-    color: #0f120d;
-    background: #9ad67c;
+    color: var(--success-ink);
+    background: var(--success);
 }
 
 .dj-status-badge.is-inactive {
     color: var(--text);
-    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--inactive-border);
+    background: var(--inactive-bg);
 }
 
 .dj-card-copy h3,
@@ -433,7 +478,8 @@ main,
 }
 
 .error-notice {
-    background: linear-gradient(135deg, rgba(105, 32, 24, 0.35), rgba(63, 18, 10, 0.42));
+    border-color: var(--danger-border);
+    background: linear-gradient(135deg, var(--danger-bg), rgba(63, 18, 10, 0.42));
 }
 
 .booking-layout {
@@ -474,11 +520,16 @@ select,
 textarea {
     width: 100%;
     padding: 14px 16px;
-    border: 1px solid rgba(217, 181, 109, 0.14);
+    border: 1px solid rgba(217, 181, 109, 0.2);
     border-radius: 16px;
     color: var(--text);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.05);
     font: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--muted-soft);
 }
 
 input:focus,
@@ -540,9 +591,18 @@ textarea:focus {
     border-radius: 999px;
     border: 1px solid var(--line);
     color: var(--text);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.05);
     font: inherit;
     cursor: pointer;
+    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.calendar-control:hover,
+.calendar-icon-button:hover,
+.calendar-view-button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(217, 181, 109, 0.34);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .calendar-icon-button {
@@ -587,7 +647,7 @@ textarea:focus {
 }
 
 .legend-vicle {
-    background: var(--calendar-rose);
+    background: var(--calendar-blue);
 }
 
 .legend-vet {
@@ -665,6 +725,7 @@ textarea:focus {
     border-radius: 12px;
     background: var(--event-color);
     color: #140f08;
+    border: 1px solid rgba(20, 15, 8, 0.12);
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
@@ -786,7 +847,7 @@ textarea:focus {
 }
 
 .calendar-time-event small {
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
 .calendar-modal.hidden {
@@ -867,6 +928,29 @@ textarea:focus {
     pointer-events: none;
 }
 
+.text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    color: var(--gold-soft);
+    font-weight: 700;
+}
+
+.text-link::after {
+    content: "\203A";
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.text-link.is-disabled {
+    color: var(--muted-soft);
+}
+
+.text-link.is-disabled::after {
+    content: "";
+}
+
 .application-list {
     display: grid;
     gap: 16px;
@@ -922,6 +1006,17 @@ textarea:focus {
     display: block;
     font-size: 1.8rem;
     color: var(--gold-soft);
+}
+
+.agenda-item h3,
+.manager-card h3,
+.application-copy h3 {
+    line-height: 1.2;
+}
+
+.booking-conflict-notice strong,
+.booking-conflict-notice span {
+    color: #fff1eb;
 }
 
 .empty-state {
