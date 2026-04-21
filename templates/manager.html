@@ -4,10 +4,10 @@
 <main class="page-stack">
     <section class="page-hero compact-hero">
         <p class="eyebrow">Manager dashboard</p>
-        <h1>Overzicht van pending aanvragen en bevestigde DJ-momenten.</h1>
+        <h1>Overzicht van nieuwe aanvragen, bevestigde bookings en beheer van het roster.</h1>
         <p class="lead">
-            Gebruik deze pagina om nieuwe aanvragen te accepteren. Zodra een booking bevestigd is,
-            verhuist ze meteen naar de agenda van Bassly.
+            Gebruik deze pagina om bookings en DJ-profielen te beoordelen. Zodra een booking bevestigd is,
+            verschijnt ze automatisch in de agenda van Bassly.
         </p>
         <div class="stats-row">
             <article class="stat-pill">
@@ -25,6 +25,10 @@
             <article class="stat-pill">
                 <strong>{{ total_applications }}</strong>
                 <span>DJ aanmeldingen</span>
+            </article>
+            <article class="stat-pill">
+                <strong>{{ total_users }}</strong>
+                <span>Gebruikersaccounts</span>
             </article>
         </div>
         <div class="hero-actions">
@@ -91,8 +95,61 @@
 
     <section class="panel">
         <div class="panel-heading">
+            <h2>DJ-accounts en profielgoedkeuring</h2>
+            <p>Hier beheer je DJ-accounts die via registratie binnenkomen en nog goedgekeurd moeten worden.</p>
+        </div>
+        {% if dj_profiles %}
+            <div class="application-list">
+                {% for profile in dj_profiles %}
+                <article class="application-card">
+                    <div class="application-copy">
+                        <p class="tag">{{ profile.city or 'Regio nog niet ingevuld' }} | {{ profile.genres }}</p>
+                        <h3>{{ profile.stage_name }}</h3>
+                        <p>{{ profile.user_email or 'Geen gekoppeld account' }}{% if profile.username %} | {{ profile.username }}{% endif %}</p>
+                        <small>Status:
+                            {% if profile.is_approved %}goedgekeurd{% else %}in review{% endif %}
+                            | {% if profile.is_bookable %}boekbaar{% else %}niet boekbaar{% endif %}
+                        </small>
+                        {% if profile.music_style %}
+                        <small>Sound: {{ profile.music_style }}</small>
+                        {% endif %}
+                        {% if profile.experience %}
+                        <small>Ervaring: {{ profile.experience }}</small>
+                        {% endif %}
+                        <small>{{ profile.bio }}</small>
+                    </div>
+                    <div class="application-gallery">
+                        {% for photo in profile.photo_paths %}
+                        <img src="{{ url_for('static', filename=photo) }}" alt="{{ profile.stage_name }}">
+                        {% endfor %}
+                    </div>
+                    <div class="application-actions">
+                        {% if not profile.is_approved %}
+                        <form method="POST" action="{{ url_for('approve_dj_profile', profile_id=profile.id) }}">
+                            <button class="button button-gold" type="submit">Profiel goedkeuren</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('toggle_dj_status', slug=profile.slug) }}">
+                            <button class="button {% if profile.is_bookable %}button-secondary{% else %}button-gold{% endif %}" type="submit">
+                                Zet {% if profile.is_bookable %}op inactief{% else %}op actief{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>Nog geen DJ-profielen</h3>
+                <p>Zodra DJ's zich registreren of worden goedgekeurd verschijnen hun profielen hier.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <div class="panel-heading">
             <h2>DJ statusbeheer</h2>
-            <p>Zet een DJ op actief of inactief om boekingen toe te laten of te blokkeren.</p>
+            <p>Zet een goedgekeurd DJ-profiel op actief of inactief om boekingen toe te laten of te blokkeren.</p>
         </div>
         <div class="application-list">
             {% for dj in djs %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Bassly | Mijn account{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="page-hero compact-hero">
+        <p class="eyebrow">Mijn account</p>
+        <h1>Welkom, {{ signed_in_user.username }}.</h1>
+        <p class="lead">
+            Je bent momenteel aangemeld als {{ role_label(signed_in_user.role) }}. Dit is je tussenstap naar een volledig klant- of DJ-dashboard.
+        </p>
+        <div class="stats-row">
+            <article class="stat-pill">
+                <strong>{{ role_label(signed_in_user.role) }}</strong>
+                <span>Actieve accountrol</span>
+            </article>
+            <article class="stat-pill">
+                <strong>{{ signed_in_user.email }}</strong>
+                <span>Ingelogd e-mailadres</span>
+            </article>
+        </div>
+    </section>
+
+    <section class="booking-layout">
+        <div class="panel">
+            <div class="panel-heading">
+                <h2>Profielstatus</h2>
+                <p>Dit overzicht toont wat al bestaat en wat we in de volgende bouwstappen nog uitbreiden.</p>
+            </div>
+            {% if signed_in_user.role == 'customer' and profile %}
+            <div class="profile-facts">
+                <article>
+                    <strong>Naam</strong>
+                    <span>{{ profile.full_name }}</span>
+                </article>
+                <article>
+                    <strong>Telefoon</strong>
+                    <span>{{ profile.phone or 'Nog niet ingevuld' }}</span>
+                </article>
+                <article>
+                    <strong>Bedrijf</strong>
+                    <span>{{ profile.company or 'Niet opgegeven' }}</span>
+                </article>
+                <article>
+                    <strong>Regio</strong>
+                    <span>{{ profile.city or 'Nog niet ingevuld' }}</span>
+                </article>
+            </div>
+            <div class="hero-actions">
+                <a class="button button-gold" href="{{ url_for('customer_profile_edit') }}">Klantprofiel bewerken</a>
+                <a class="button button-secondary" href="{{ url_for('book') }}">Nieuwe bookingaanvraag</a>
+            </div>
+            {% elif signed_in_user.role == 'dj' and profile %}
+            <div class="profile-facts">
+                <article>
+                    <strong>DJ-naam</strong>
+                    <span>{{ profile.stage_name }}</span>
+                </article>
+                <article>
+                    <strong>Status</strong>
+                    <span>{% if profile.is_approved %}Goedgekeurd{% else %}Wacht op goedkeuring{% endif %}</span>
+                </article>
+                <article>
+                    <strong>Boekbaar</strong>
+                    <span>{% if profile.is_bookable %}Ja{% else %}Nog niet{% endif %}</span>
+                </article>
+                <article>
+                    <strong>Genres</strong>
+                    <span>{{ profile.genres }}</span>
+                </article>
+            </div>
+            <div class="hero-actions">
+                <a class="button button-gold" href="{{ url_for('dj_profile_edit') }}">DJ-profiel bewerken</a>
+            </div>
+            {% elif signed_in_user.role == 'admin' %}
+            <div class="profile-facts">
+                <article>
+                    <strong>Beheerrol</strong>
+                    <span>Je hebt toegang tot de manageromgeving en alle goedkeuringsflows.</span>
+                </article>
+                <article>
+                    <strong>Managerdashboard</strong>
+                    <span>Gebruik het dashboard om bookings, DJ's en aanmeldingen op te volgen.</span>
+                </article>
+            </div>
+            <div class="hero-actions">
+                <a class="button button-gold" href="{{ url_for('manager') }}">Open managerdashboard</a>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <h3>Profiel nog in opbouw</h3>
+                <p>Je account bestaat al, maar de volgende ontwikkelstap bouwt hier het volledige dashboard rond.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <aside class="booking-sidebar">
+            <div class="sidebar-card">
+                <p class="eyebrow">Volgende stap</p>
+                <h3>De fundering staat klaar.</h3>
+                <p>
+                    Vanuit dit account groeien we verder naar volledige boekingsopvolging,
+                    profielbeheer en goedkeuringsflows.
+                </p>
+            </div>
+        </aside>
+    </section>
+</main>
+{% endblock %}

@@ -111,11 +111,42 @@ h3 {
     gap: 18px;
     flex-wrap: wrap;
     color: var(--muted);
+    align-items: center;
+}
+
+.site-nav a {
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.site-nav a:hover {
+    border-color: var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-1px);
+}
+
+.site-nav a.is-current {
+    color: #140f08;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, #f0d79f, #b98f49);
+}
+
+.site-nav .nav-utility {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .site-nav a:hover,
 .text-link:hover {
     color: var(--gold-soft);
+}
+
+.flash-stack {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 24px;
 }
 
 main,
