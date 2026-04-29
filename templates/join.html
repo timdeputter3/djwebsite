@@ -23,52 +23,52 @@
             <div class="form-grid">
                 <label>
                     DJ naam / artiestennaam
-                    <input type="text" name="stage_name" required>
+                    <input type="text" name="stage_name" value="{{ profile.stage_name if profile else '' }}" required>
                 </label>
                 <label>
                     Contactpersoon
-                    <input type="text" name="contact_name" required>
+                    <input type="text" name="contact_name" value="{{ signed_in_user.username if signed_in_user else '' }}" required>
                 </label>
                 <label>
                     E-mail
-                    <input type="email" name="email" required>
+                    <input type="email" name="email" value="{{ signed_in_user.email if signed_in_user else '' }}" required>
                 </label>
                 <label>
                     Telefoon
-                    <input type="tel" name="phone" required>
+                    <input type="tel" name="phone" value="" required>
                 </label>
                 <label>
                     Stad / regio
-                    <input type="text" name="city" placeholder="Kortrijk, Gent, Brugge..." required>
+                    <input type="text" name="city" placeholder="Kortrijk, Gent, Brugge..." value="{{ profile.city if profile else '' }}" required>
                 </label>
                 <label>
                     Genres
-                    <input type="text" name="genres" placeholder="House, open format, afro, techno..." required>
+                    <input type="text" name="genres" placeholder="House, open format, afro, techno..." value="{{ profile.genres if profile else '' }}" required>
                 </label>
                 <label class="full-width">
                     Wat draai je precies?
-                    <textarea name="music_style" rows="4" placeholder="Beschrijf je sound, energie en soort events waar je best tot je recht komt." required></textarea>
+                    <textarea name="music_style" rows="4" placeholder="Beschrijf je sound, energie en soort events waar je best tot je recht komt." required>{{ profile.music_style if profile else '' }}</textarea>
                 </label>
                 <label class="full-width">
                     Ervaring
-                    <textarea name="experience" rows="4" placeholder="Vertel over eerdere events, clubs, privefeesten of residenties." required></textarea>
+                    <textarea name="experience" rows="4" placeholder="Vertel over eerdere events, clubs, privefeesten of residenties." required>{{ profile.experience if profile else '' }}</textarea>
                 </label>
                 <label class="full-width">
                     Bio / profieltekst
-                    <textarea name="bio" rows="5" placeholder="Geef een korte professionele introductie die Bassly intern kan gebruiken." required></textarea>
+                    <textarea name="bio" rows="5" placeholder="Geef een korte professionele introductie die Bassly intern kan gebruiken." required>{{ profile.bio if profile else '' }}</textarea>
                 </label>
                 <label>
                     Materiaal / setup
-                    <textarea name="equipment" rows="3" placeholder="Bijvoorbeeld eigen controller, USB-only, microfoon, licht..."></textarea>
+                    <textarea name="equipment" rows="3" placeholder="Bijvoorbeeld eigen controller, USB-only, microfoon, licht...">{{ profile.equipment if profile else '' }}</textarea>
                 </label>
                 <label>
                     Sociale media / links
-                    <textarea name="socials" rows="3" placeholder="Instagram, SoundCloud, Mixcloud, YouTube, website..."></textarea>
+                    <textarea name="socials" rows="3" placeholder="Instagram, SoundCloud, Mixcloud, YouTube, website...">{{ profile.socials if profile else '' }}</textarea>
                 </label>
                 <label class="full-width">
                     Beschikbaarheid via agenda
                     <input type="hidden" name="availability_dates" id="availability_dates">
-                    <div class="availability-picker" id="availability-picker">
+                    <div class="availability-picker" id="availability-picker" data-selected='{{ availability|default([])|tojson }}'>
                         <div class="availability-toolbar">
                             <button class="calendar-icon-button" type="button" data-availability-nav="prev" aria-label="Vorige maand">&#8249;</button>
                             <strong id="availability-title">Beschikbaarheid</strong>
@@ -119,7 +119,7 @@
     const summaryEl = document.getElementById("availability-summary");
     const controls = Array.from(picker.querySelectorAll("[data-availability-nav]"));
     const monthNames = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
-    const selectedDates = new Set();
+    const selectedDates = new Set(JSON.parse(picker.dataset.selected || "[]"));
     let cursor = new Date();
     cursor.setDate(1);
 

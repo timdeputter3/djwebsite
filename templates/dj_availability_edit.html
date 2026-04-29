@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Bassly | DJ-beschikbaarheden{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="page-hero compact-hero">
+        <p class="eyebrow">DJ beschikbaarheid</p>
+        <h1>Beheer op welke dagen je boekbaar bent.</h1>
+        <p class="lead">
+            Markeer de dagen waarop je beschikbaar bent. Deze informatie gebruiken we om filters op de DJ-pagina
+            en boekingsvalidatie correct te laten werken.
+        </p>
+        <div class="stats-row">
+            <article class="stat-pill">
+                <strong>{{ availability_count }}</strong>
+                <span>Beschikbare dagen</span>
+            </article>
+            <article class="stat-pill">
+                <strong>{% if profile.is_bookable %}Boekbaar{% else %}Niet boekbaar{% endif %}</strong>
+                <span>Huidige status</span>
+            </article>
+        </div>
+    </section>
+
+    <section class="booking-layout">
+        <form class="booking-form" method="POST">
+            <label class="full-width">
+                Kies je beschikbare dagen
+                <input type="hidden" name="availability_dates" id="availability_dates">
+                <div class="availability-picker" id="availability-picker" data-selected='{{ availability|tojson }}'>
+                    <div class="availability-toolbar">
+                        <button class="calendar-icon-button" type="button" data-availability-nav="prev" aria-label="Vorige maand">&#8249;</button>
+                        <strong id="availability-title">Beschikbaarheid</strong>
+                        <button class="calendar-icon-button" type="button" data-availability-nav="next" aria-label="Volgende maand">&#8250;</button>
+                    </div>
+                    <div class="availability-weekdays">
+                        <span>Ma</span><span>Di</span><span>Wo</span><span>Do</span><span>Vr</span><span>Za</span><span>Zo</span>
+                    </div>
+                    <div class="availability-grid" id="availability-grid"></div>
+                    <small id="availability-summary">Nog geen dagen geselecteerd.</small>
+                </div>
+            </label>
+            <div class="hero-actions">
+                <button class="button button-gold" type="submit">Beschikbaarheid opslaan</button>
+                <a class="button button-secondary" href="{{ url_for('dj_profile_edit') }}">Terug naar DJ-profiel</a>
+            </div>
+        </form>
+
+        <aside class="booking-sidebar">
+            <div class="sidebar-card">
+                <p class="eyebrow">Waarom dit telt</p>
+                <p>Klanten kunnen DJ-profielen filteren op datum en uur. Alleen profielen zonder conflict en met een passende beschikbare dag blijven zichtbaar.</p>
+            </div>
+        </aside>
+    </section>
+</main>
+<script>
+(() => {
+    const picker = document.getElementById("availability-picker");
+    if (!picker) return;
+
+    const titleEl = document.getElementById("availability-title");
+    const gridEl = document.getElementById("availability-grid");
+    const inputEl = document.getElementById("availability_dates");
+    const summaryEl = document.getElementById("availability-summary");
+    const controls = Array.from(picker.querySelectorAll("[data-availability-nav]"));
+    const monthNames = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
+    const selectedDates = new Set(JSON.parse(picker.dataset.selected || "[]"));
+    let cursor = new Date();
+    cursor.setDate(1);
+
+    function startOfWeek(date) {
+        const d = new Date(date);
+        const offset = (d.getDay() + 6) % 7;
+        d.setDate(d.getDate() - offset);
+        return d;
+    }
+
+    function syncInput() {
+        const values = Array.from(selectedDates).sort();
+        inputEl.value = values.join(",");
+        summaryEl.textContent = values.length
+            ? `${values.length} beschikbare dag(en) geselecteerd`
+            : "Nog geen dagen geselecteerd.";
+    }
+
+    function render() {
+        titleEl.textContent = `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
+        const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+        const gridStart = startOfWeek(monthStart);
+        const cells = [];
+        for (let i = 0; i < 42; i += 1) {
+            const day = new Date(gridStart);
+            day.setDate(gridStart.getDate() + i);
+            cells.push(day);
+        }
+
+        gridEl.innerHTML = cells.map((day) => {
+            const iso = day.toISOString().slice(0, 10);
+            const classes = [
+                "availability-day",
+                day.getMonth() === cursor.getMonth() ? "" : "is-outside",
+                selectedDates.has(iso) ? "is-selected" : ""
+            ].filter(Boolean).join(" ");
+            return `<button class="${classes}" type="button" data-date="${iso}">${day.getDate()}</button>`;
+        }).join("");
+
+        gridEl.querySelectorAll("[data-date]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const value = button.dataset.date;
+                if (selectedDates.has(value)) {
+                    selectedDates.delete(value);
+                } else {
+                    selectedDates.add(value);
+                }
+                syncInput();
+                render();
+            });
+        });
+    }
+
+    controls.forEach((button) => {
+        button.addEventListener("click", () => {
+            cursor = new Date(cursor.getFullYear(), cursor.getMonth() + (button.dataset.availabilityNav === "next" ? 1 : -1), 1);
+            render();
+        });
+    });
+
+    syncInput();
+    render();
+})();
+</script>
+{% endblock %}

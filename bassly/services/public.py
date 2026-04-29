@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from flask_login import current_user
 
@@ -50,6 +51,28 @@ def active_public_djs():
     return [dj for dj in public_djs() if dj.get("active", True)]
 
 
+def dj_is_available_on_date(dj, event_date):
+    availability = dj.get("availability", [])
+    if not availability:
+        return True
+    if isinstance(event_date, str):
+        date_key = event_date
+    else:
+        date_key = event_date.strftime("%Y-%m-%d")
+    return date_key in availability
+
+
+def available_public_djs_for_slot(event_date, start_time, end_time):
+    available = []
+    for dj in active_public_djs():
+        if not dj_is_available_on_date(dj, event_date):
+            continue
+        if booking_conflicts(dj["name"], event_date, start_time, end_time):
+            continue
+        available.append(dj)
+    return available
+
+
 def booking_conflicts(dj_name, event_date, start_time, end_time, exclude_public_id=None):
     requested_start, requested_end = booking_bounds(event_date, start_time, end_time)
     candidates = Booking.query.filter(
@@ -78,6 +101,29 @@ def booking_form_defaults():
             "location": profile.city or "",
         }
     return {}
+
+
+def parse_slot_filters(date_value, start_value, end_value):
+    if not any([date_value, start_value, end_value]):
+        return None, None
+    if not all([date_value, start_value, end_value]):
+        return None, "Vul datum, startuur en einduur in om op beschikbaarheid te filteren."
+
+    try:
+        event_date = datetime.strptime(date_value, "%Y-%m-%d").date()
+        start_time = datetime.strptime(start_value, "%H:%M").time()
+        end_time = datetime.strptime(end_value, "%H:%M").time()
+    except ValueError:
+        return None, "De gekozen datum of uren zijn niet geldig."
+
+    return {
+        "event_date": event_date,
+        "start_time": start_time,
+        "end_time": end_time,
+        "event_date_value": date_value,
+        "start_time_value": start_value,
+        "end_time_value": end_value,
+    }, None
 
 
 def sync_dj_status_records():

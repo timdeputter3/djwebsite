@@ -2,11 +2,10 @@ import csv
 import io
 from datetime import datetime
 
-from flask import Response, abort, redirect, render_template, request, session, url_for
-from werkzeug.security import check_password_hash
+from flask import Response, abort, redirect, render_template, request, url_for
+from flask_login import current_user
 
 from bassly.auth import manager_required
-from bassly.config import MANAGER_PASSWORD_HASH, MANAGER_USERNAME
 from bassly.extensions import db
 from bassly.models import Booking, DJApplication, DJProfile, DJStatus, User
 from bassly.services.notifications import send_notification
@@ -25,24 +24,16 @@ from bassly.utils import serialize_application, serialize_booking
 def register_manager_routes(app):
     @app.route("/manager/login", methods=["GET", "POST"])
     def manager_login():
-        error = False
-        if request.method == "POST":
-            username = request.form.get("username", "").strip()
-            password = request.form.get("password", "")
-            if username == MANAGER_USERNAME and check_password_hash(MANAGER_PASSWORD_HASH, password):
-                session["manager_authenticated"] = True
-                session["manager_username"] = username
-                destination = request.args.get("next") or url_for("manager")
-                return redirect(destination)
-            error = True
-
-        return render_template("manager_login.html", error=error)
+        destination = request.args.get("next") or url_for("manager")
+        if not current_user.is_authenticated:
+            return redirect(url_for("login", next=destination))
+        if current_user.role != "admin":
+            abort(403)
+        return redirect(destination)
 
     @app.route("/manager/logout")
     def manager_logout():
-        session.pop("manager_authenticated", None)
-        session.pop("manager_username", None)
-        return redirect(url_for("home"))
+        return redirect(url_for("logout"))
 
     @app.route("/manager")
     @manager_required

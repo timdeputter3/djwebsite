@@ -11,7 +11,46 @@
         </p>
     </section>
 
+    <section class="panel">
+        <div class="panel-heading">
+            <h2>Filter op beschikbaar moment</h2>
+            <p>Vul datum en uren in om alleen DJ-profielen te tonen die dan boekbaar en conflictvrij zijn.</p>
+        </div>
+        <form class="booking-form" method="GET">
+            <div class="form-grid">
+                <label>
+                    Datum
+                    <input type="date" name="event_date" value="{{ filter_state.event_date }}">
+                </label>
+                <label>
+                    Startuur
+                    <input type="time" name="start_time" value="{{ filter_state.start_time }}">
+                </label>
+                <label>
+                    Einduur
+                    <input type="time" name="end_time" value="{{ filter_state.end_time }}">
+                </label>
+            </div>
+            <div class="hero-actions">
+                <button class="button button-gold" type="submit">Toon beschikbare DJ's</button>
+                <a class="button button-secondary" href="{{ url_for('djs') }}">Reset filter</a>
+            </div>
+        </form>
+        {% if filter_error %}
+        <section class="notice error-notice">
+            <strong>Filter onvolledig.</strong>
+            <span>{{ filter_error }}</span>
+        </section>
+        {% elif filtered_on_slot %}
+        <section class="notice success-notice">
+            <strong>Filter toegepast.</strong>
+            <span>{{ djs|length }} DJ-profiel(en) beschikbaar op {{ filter_state.event_date }} van {{ filter_state.start_time }} tot {{ filter_state.end_time }}.</span>
+        </section>
+        {% endif %}
+    </section>
+
     <section class="dj-grid">
+        {% if djs %}
         {% for dj in djs %}
         <article class="dj-card dj-card-large">
             <div class="dj-gallery">
@@ -50,6 +89,12 @@
             </div>
         </article>
         {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <h3>Geen beschikbare DJ-profielen gevonden</h3>
+            <p>Probeer een ander moment of verwijder de filter om het volledige roster te bekijken.</p>
+        </div>
+        {% endif %}
     </section>
 </main>
 {% endblock %}

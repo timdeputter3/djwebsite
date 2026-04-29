@@ -1,9 +1,9 @@
 from functools import wraps
 
-from flask import abort, redirect, request, session, url_for
+from flask import abort, redirect, request, url_for
 from flask_login import current_user, login_required
 
-from bassly.config import MANAGER_USERNAME, UPLOAD_BACKEND
+from bassly.config import UPLOAD_BACKEND
 from bassly.extensions import db
 from bassly.extensions import login_manager
 from bassly.models import User
@@ -26,8 +26,7 @@ def configure_login(app):
     @app.context_processor
     def inject_global_state():
         return {
-            "manager_logged_in": is_manager_logged_in(),
-            "manager_username": MANAGER_USERNAME,
+            "manager_logged_in": is_admin_user(),
             "signed_in_user": current_user if current_user.is_authenticated else None,
             "role_label": role_label,
             "upload_backend": UPLOAD_BACKEND,
@@ -35,7 +34,7 @@ def configure_login(app):
 
 
 def is_manager_logged_in():
-    return session.get("manager_authenticated", False)
+    return is_admin_user()
 
 
 def is_admin_user():
@@ -45,8 +44,10 @@ def is_admin_user():
 def manager_required(view_func):
     @wraps(view_func)
     def wrapped_view(*args, **kwargs):
-        if not (is_manager_logged_in() or is_admin_user()):
-            return redirect(url_for("manager_login", next=request.path))
+        if not current_user.is_authenticated:
+            return redirect(url_for("login", next=request.path))
+        if not is_admin_user():
+            abort(403)
         return view_func(*args, **kwargs)
 
     return wrapped_view

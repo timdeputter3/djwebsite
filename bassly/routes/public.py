@@ -13,9 +13,12 @@ from bassly.services.notifications import send_notification
 from bassly.services.public import (
     accepted_bookings,
     active_public_djs,
+    available_public_djs_for_slot,
     booking_conflicts,
     booking_form_defaults,
+    dj_is_available_on_date,
     find_public_dj,
+    parse_slot_filters,
     public_djs,
 )
 from bassly.services.uploads import save_application_photos, save_dj_profile_photos
@@ -133,11 +136,6 @@ def register_public_routes(app):
             profile.socials = request.form.get("socials", "").strip()
             profile.bio = request.form.get("bio", "").strip() or profile.bio
 
-            availability_dates = sorted(
-                [item.strip() for item in request.form.get("availability_dates", "").split(",") if item.strip()]
-            )
-            profile.availability = json.dumps(availability_dates)
-
             existing_paths = json.loads(profile.photo_paths or "[]")
             new_paths = save_dj_profile_photos(
                 request.files.getlist("photos"),
@@ -158,6 +156,31 @@ def register_public_routes(app):
             photos=json.loads(profile.photo_paths or "[]"),
         )
 
+    @app.route("/dj/availability", methods=["GET", "POST"])
+    @role_required("dj")
+    def dj_availability_edit():
+        profile = current_user.dj_profile
+        if profile is None:
+            abort(404)
+
+        if request.method == "POST":
+            availability_dates = sorted(
+                {item.strip() for item in request.form.get("availability_dates", "").split(",") if item.strip()}
+            )
+            profile.availability = json.dumps(availability_dates)
+            db.session.add(profile)
+            db.session.commit()
+            flash("Je beschikbaarheden zijn bijgewerkt.", "success")
+            return redirect(url_for("dj_availability_edit"))
+
+        availability = parse_availability(profile.availability)
+        return render_template(
+            "dj_availability_edit.html",
+            profile=profile,
+            availability=availability,
+            availability_count=len(availability),
+        )
+
     @app.route("/")
     def home():
         agenda = accepted_bookings(limit=4)
@@ -166,7 +189,32 @@ def register_public_routes(app):
 
     @app.route("/djs")
     def djs():
-        return render_template("djs.html", djs=public_djs())
+        filter_state = {
+            "event_date": request.args.get("event_date", ""),
+            "start_time": request.args.get("start_time", ""),
+            "end_time": request.args.get("end_time", ""),
+        }
+        slot_filter, filter_error = parse_slot_filters(
+            filter_state["event_date"],
+            filter_state["start_time"],
+            filter_state["end_time"],
+        )
+        filtered_on_slot = False
+        djs_list = public_djs()
+        if slot_filter:
+            djs_list = available_public_djs_for_slot(
+                slot_filter["event_date"],
+                slot_filter["start_time"],
+                slot_filter["end_time"],
+            )
+            filtered_on_slot = True
+        return render_template(
+            "djs.html",
+            djs=djs_list,
+            filter_state=filter_state,
+            filter_error=filter_error,
+            filtered_on_slot=filtered_on_slot,
+        )
 
     @app.route("/djs/<slug>")
     def dj_detail(slug):
@@ -180,7 +228,12 @@ def register_public_routes(app):
         return render_template("agenda.html", agenda_events=accepted_bookings())
 
     @app.route("/join", methods=["GET", "POST"])
+    @role_required("dj")
     def join():
+        profile = current_user.dj_profile
+        if profile is None:
+            abort(404)
+
         if request.method == "POST":
             application_id = uuid4().hex[:12]
             photo_paths = save_application_photos(request.files.getlist("photos"), application_id)
@@ -220,7 +273,12 @@ def register_public_routes(app):
             )
             return redirect(url_for("join", success="1"))
 
-        return render_template("join.html", success=request.args.get("success") == "1")
+        return render_template(
+            "join.html",
+            success=request.args.get("success") == "1",
+            profile=profile,
+            availability=parse_availability(profile.availability),
+        )
 
     @app.route("/book", methods=["GET", "POST"])
     @role_required("customer", "admin")
@@ -242,6 +300,15 @@ def register_public_routes(app):
                     conflicts=[],
                     form_data=request.form.to_dict(),
                     booking_error="Deze DJ staat momenteel op inactief en kan niet geboekt worden.",
+                )
+            if not dj_is_available_on_date(selected_dj, event_date):
+                return render_template(
+                    "booking.html",
+                    djs=djs,
+                    success=False,
+                    conflicts=[],
+                    form_data=request.form.to_dict(),
+                    booking_error="Deze DJ heeft zichzelf op die datum niet als beschikbaar gemarkeerd.",
                 )
             conflicts = booking_conflicts(dj_name, event_date, start_time, end_time)
             if conflicts:

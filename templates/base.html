@@ -24,10 +24,12 @@
                 <a class="{% if request.endpoint == 'home' %}is-current{% endif %}" href="{{ url_for('home') }}">Home</a>
                 <a class="{% if request.endpoint == 'agenda' %}is-current{% endif %}" href="{{ url_for('agenda') }}">Agenda</a>
                 <a class="{% if request.endpoint in ['djs', 'dj_detail'] %}is-current{% endif %}" href="{{ url_for('djs') }}">DJ's</a>
-                <a class="{% if request.endpoint == 'join' %}is-current{% endif %}" href="{{ url_for('join') }}">DJ aanmelden</a>
                 <a class="{% if request.endpoint == 'book' %}is-current{% endif %}" href="{{ url_for('book') }}">Boeken</a>
                 <a class="{% if request.endpoint == 'contact' %}is-current{% endif %}" href="{{ url_for('contact') }}">Contact</a>
                 {% if signed_in_user %}
+                {% if signed_in_user.role == 'dj' %}
+                <a class="{% if request.endpoint == 'join' %}is-current{% endif %}" href="{{ url_for('join') }}">DJ aanmelden</a>
+                {% endif %}
                 <a class="{% if request.endpoint == 'account' %}is-current{% endif %}" href="{{ url_for('account') }}">Mijn account</a>
                 <a href="{{ url_for('logout') }}">Uitloggen</a>
                 {% else %}
@@ -36,9 +38,6 @@
                 {% endif %}
                 {% if manager_logged_in %}
                 <a class="{% if request.endpoint == 'manager' %}is-current{% endif %}" href="{{ url_for('manager') }}">Manager</a>
-                <a href="{{ url_for('manager_logout') }}">Logout</a>
-                {% else %}
-                <a class="nav-utility {% if request.endpoint == 'manager_login' %}is-current{% endif %}" href="{{ url_for('manager_login') }}">Manager login</a>
                 {% endif %}
             </nav>
         </header>

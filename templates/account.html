@@ -70,6 +70,8 @@
             </div>
             <div class="hero-actions">
                 <a class="button button-gold" href="{{ url_for('dj_profile_edit') }}">DJ-profiel bewerken</a>
+                <a class="button button-secondary" href="{{ url_for('dj_availability_edit') }}">Beschikbaarheden beheren</a>
+                <a class="button button-secondary" href="{{ url_for('join') }}">DJ-aanmelding afronden</a>
             </div>
             {% elif signed_in_user.role == 'admin' %}
             <div class="profile-facts">
@@ -102,6 +104,12 @@
                     profielbeheer en goedkeuringsflows.
                 </p>
             </div>
+            {% if signed_in_user.role == 'dj' and profile %}
+            <div class="sidebar-card dark-card">
+                <p class="eyebrow">DJ flow</p>
+                <p>Werk eerst je profiel en beschikbaarheden bij. Dien daarna je DJ-aanmelding in zodat de manager je profiel kan beoordelen.</p>
+            </div>
+            {% endif %}
         </aside>
     </section>
 </main>
