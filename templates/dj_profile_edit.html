@@ -1,74 +1,65 @@
 {% extends "base.html" %}
-{% block title %}Bassly | DJ aanmelden{% endblock %}
+{% block title %}Bassly | DJ-profiel bewerken{% endblock %}
 {% block content %}
 <main class="page-stack">
     <section class="page-hero compact-hero">
-        <p class="eyebrow">DJ onboarding</p>
-        <h1>Wil je deel uitmaken van Bassly? Stel je profiel professioneel aan ons voor.</h1>
+        <p class="eyebrow">DJ dashboard</p>
+        <h1>Beheer je DJ-profiel en houd je informatie up-to-date.</h1>
         <p class="lead">
-            Vul je stijl, ervaring, genres en visuals in. Zo kan Bassly snel inschatten
-            of je past binnen het roster voor events in Kortrijk en daarbuiten.
+            Werk je bio, genres, beschikbaarheid en beelden bij. Het Bassly-team gebruikt deze informatie
+            om je profiel correct te beoordelen en professioneel te presenteren.
         </p>
+        <div class="stats-row">
+            <article class="stat-pill">
+                <strong>{% if profile.is_approved %}Goedgekeurd{% else %}In review{% endif %}</strong>
+                <span>Status van je profiel</span>
+            </article>
+            <article class="stat-pill">
+                <strong>{% if profile.is_bookable %}Boekbaar{% else %}Nog niet boekbaar{% endif %}</strong>
+                <span>Publieke boekbaarheid</span>
+            </article>
+        </div>
     </section>
-
-    {% if success %}
-    <section class="notice success-notice">
-        <strong>Je aanmelding is verzonden.</strong>
-        <span>De manager kan nu je profiel, foto's en muzikale richting bekijken.</span>
-    </section>
-    {% endif %}
 
     <section class="booking-layout">
         <form class="booking-form" method="POST" enctype="multipart/form-data">
             <div class="form-grid">
                 <label>
-                    DJ naam / artiestennaam
-                    <input type="text" name="stage_name" required>
-                </label>
-                <label>
-                    Contactpersoon
-                    <input type="text" name="contact_name" required>
-                </label>
-                <label>
-                    E-mail
-                    <input type="email" name="email" required>
-                </label>
-                <label>
-                    Telefoon
-                    <input type="tel" name="phone" required>
+                    DJ-naam
+                    <input type="text" name="stage_name" value="{{ profile.stage_name }}" required>
                 </label>
                 <label>
                     Stad / regio
-                    <input type="text" name="city" placeholder="Kortrijk, Gent, Brugge..." required>
-                </label>
-                <label>
-                    Genres
-                    <input type="text" name="genres" placeholder="House, open format, afro, techno..." required>
+                    <input type="text" name="city" value="{{ profile.city or '' }}">
                 </label>
                 <label class="full-width">
-                    Wat draai je precies?
-                    <textarea name="music_style" rows="4" placeholder="Beschrijf je sound, energie en soort events waar je best tot je recht komt." required></textarea>
+                    Genres
+                    <input type="text" name="genres" value="{{ profile.genres }}" required>
+                </label>
+                <label class="full-width">
+                    Sound en stijl
+                    <textarea name="music_style" rows="4" placeholder="Welke sound breng je, voor welke events ben je sterk en hoe bouw je een set op?">{{ profile.music_style or '' }}</textarea>
                 </label>
                 <label class="full-width">
                     Ervaring
-                    <textarea name="experience" rows="4" placeholder="Vertel over eerdere events, clubs, privefeesten of residenties." required></textarea>
+                    <textarea name="experience" rows="4" placeholder="Residenties, clubs, privéfeesten, bedrijfsevents, festivals...">{{ profile.experience or '' }}</textarea>
                 </label>
                 <label class="full-width">
-                    Bio / profieltekst
-                    <textarea name="bio" rows="5" placeholder="Geef een korte professionele introductie die Bassly intern kan gebruiken." required></textarea>
+                    Bio
+                    <textarea name="bio" rows="5" placeholder="Schrijf een professionele profieltekst die Bassly later publiek kan tonen.">{{ profile.bio }}</textarea>
                 </label>
                 <label>
                     Materiaal / setup
-                    <textarea name="equipment" rows="3" placeholder="Bijvoorbeeld eigen controller, USB-only, microfoon, licht..."></textarea>
+                    <textarea name="equipment" rows="3">{{ profile.equipment or '' }}</textarea>
                 </label>
                 <label>
                     Sociale media / links
-                    <textarea name="socials" rows="3" placeholder="Instagram, SoundCloud, Mixcloud, YouTube, website..."></textarea>
+                    <textarea name="socials" rows="3">{{ profile.socials or '' }}</textarea>
                 </label>
                 <label class="full-width">
                     Beschikbaarheid via agenda
                     <input type="hidden" name="availability_dates" id="availability_dates">
-                    <div class="availability-picker" id="availability-picker">
+                    <div class="availability-picker" id="availability-picker" data-selected='{{ availability|tojson }}'>
                         <div class="availability-toolbar">
                             <button class="calendar-icon-button" type="button" data-availability-nav="prev" aria-label="Vorige maand">&#8249;</button>
                             <strong id="availability-title">Beschikbaarheid</strong>
@@ -82,28 +73,32 @@
                     </div>
                 </label>
                 <label class="full-width">
-                    Foto's uploaden
+                    Nieuwe foto's toevoegen
                     <input type="file" name="photos" accept=".jpg,.jpeg,.png,.webp" multiple>
                 </label>
             </div>
-            <button class="button button-gold" type="submit">Stuur DJ-aanmelding</button>
+            <button class="button button-gold" type="submit">Profiel opslaan</button>
         </form>
 
         <aside class="booking-sidebar">
             <div class="sidebar-card">
-                <p class="eyebrow">Wat meesturen</p>
-                <ol>
-                    <li>Een duidelijke artiestennaam en korte professionele bio.</li>
-                    <li>Genres en type events waar je het sterkst in bent.</li>
-                    <li>Meerdere foto's die je uitstraling en setup tonen.</li>
-                </ol>
+                <p class="eyebrow">Huidige status</p>
+                <p>Goedkeuring: <strong>{% if profile.is_approved %}ja{% else %}nog in behandeling{% endif %}</strong></p>
+                <p>Boekbaar: <strong>{% if profile.is_bookable %}ja{% else %}nee{% endif %}</strong></p>
+                <p>Foto's: <strong>{{ photos|length }}</strong></p>
             </div>
             <div class="sidebar-card dark-card">
-                <p class="eyebrow">Voor Bassly</p>
-                <h3>We zoeken DJ's met karakter, betrouwbaarheid en een duidelijke muzikale identiteit.</h3>
-                <p>
-                    Bassly bouwt bewust aan een roster dat zowel visueel als muzikaal vertrouwen uitstraalt, met ruimte voor verschillende stijlen en sterke profielen.
-                </p>
+                <p class="eyebrow">Profielbeelden</p>
+                <p>Nieuwe uploads worden toegevoegd aan je bestaande galerij en blijven privé tot je profiel publiek gebruikt wordt.</p>
+                {% if photos %}
+                <div class="application-gallery">
+                    {% for image in photos %}
+                    <img src="{{ url_for('static', filename=image) }}" alt="{{ profile.stage_name }}">
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>Nog geen foto's toegevoegd.</p>
+                {% endif %}
             </div>
         </aside>
     </section>
@@ -119,7 +114,7 @@
     const summaryEl = document.getElementById("availability-summary");
     const controls = Array.from(picker.querySelectorAll("[data-availability-nav]"));
     const monthNames = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
-    const selectedDates = new Set();
+    const selectedDates = new Set(JSON.parse(picker.dataset.selected || "[]"));
     let cursor = new Date();
     cursor.setDate(1);
 
@@ -141,7 +136,6 @@
     function render() {
         titleEl.textContent = `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
         const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-        const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
         const gridStart = startOfWeek(monthStart);
         const cells = [];
         for (let i = 0; i < 42; i += 1) {

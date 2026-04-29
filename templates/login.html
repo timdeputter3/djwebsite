@@ -1,14 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Bassly | Manager login{% endblock %}
+{% block title %}Bassly | Login{% endblock %}
 {% block content %}
 <main class="page-stack">
     <section class="login-shell">
         <div class="page-hero compact-hero">
-            <p class="eyebrow">Prive toegang</p>
-            <h1>Het managerdashboard is alleen zichtbaar na login.</h1>
+            <p class="eyebrow">Login</p>
+            <h1>Log in op je Bassly-account.</h1>
             <p class="lead">
-                Deze omgeving is alleen bedoeld voor beheer. Na login kan je bookings beoordelen,
-                DJ-profielen beheren en de planning opvolgen.
+                Gebruik je gebruikersnaam of e-mailadres om toegang te krijgen tot je account en vervolgstappen.
             </p>
         </div>
 
@@ -16,18 +15,19 @@
             {% if error %}
             <div class="notice error-notice">
                 <strong>Login mislukt.</strong>
-                <span>Controleer je gebruikersnaam en wachtwoord en probeer opnieuw.</span>
+                <span>{{ error }}</span>
             </div>
             {% endif %}
+            <input type="hidden" name="next" value="{{ next_url }}">
             <label>
-                Gebruikersnaam
-                <input type="text" name="username" value="{{ manager_username }}" required>
+                Gebruikersnaam of e-mail
+                <input type="text" name="identifier" required>
             </label>
             <label>
                 Wachtwoord
                 <input type="password" name="password" required>
             </label>
-            <button class="button button-gold" type="submit">Open dashboard</button>
+            <button class="button button-gold" type="submit">Inloggen</button>
         </form>
     </section>
 </main>

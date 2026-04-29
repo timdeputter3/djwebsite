@@ -149,6 +149,12 @@ h3 {
     color: var(--gold-soft);
 }
 
+.flash-stack {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
 main,
 .page-stack {
     display: grid;

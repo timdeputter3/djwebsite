@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Bassly | Account maken{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="login-shell">
+        <div class="page-hero compact-hero">
+            <p class="eyebrow">Nieuw account</p>
+            <h1>Maak een Bassly-account aan als klant of als DJ.</h1>
+            <p class="lead">
+                Kies je rol, vul je basisgegevens in en je bent meteen klaar om verder te bouwen aan je profiel.
+            </p>
+        </div>
+
+        <form class="booking-form login-form" method="POST">
+            {% if error %}
+            <div class="notice error-notice">
+                <strong>Registratie mislukt.</strong>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+            <div class="form-grid">
+                <label>
+                    Rol
+                    <select name="role" required>
+                        <option value="customer" {% if form_data.get('role', 'customer') == 'customer' %}selected{% endif %}>Klant</option>
+                        <option value="dj" {% if form_data.get('role') == 'dj' %}selected{% endif %}>DJ</option>
+                    </select>
+                </label>
+                <label>
+                    Gebruikersnaam
+                    <input type="text" name="username" value="{{ form_data.get('username', '') }}" required>
+                </label>
+                <label>
+                    E-mail
+                    <input type="email" name="email" value="{{ form_data.get('email', '') }}" required>
+                </label>
+                <label>
+                    Wachtwoord
+                    <input type="password" name="password" required>
+                </label>
+                <label>
+                    Naam
+                    <input type="text" name="full_name" value="{{ form_data.get('full_name', '') }}">
+                </label>
+                <label>
+                    Telefoon
+                    <input type="text" name="phone" value="{{ form_data.get('phone', '') }}">
+                </label>
+                <label>
+                    Bedrijf
+                    <input type="text" name="company" value="{{ form_data.get('company', '') }}">
+                </label>
+                <label>
+                    Stad / regio
+                    <input type="text" name="city" value="{{ form_data.get('city', '') }}">
+                </label>
+                <label class="full-width">
+                    DJ-naam
+                    <input type="text" name="stage_name" value="{{ form_data.get('stage_name', '') }}" placeholder="Alleen invullen als je als DJ registreert">
+                </label>
+            </div>
+            <button class="button button-gold" type="submit">Account aanmaken</button>
+        </form>
+    </section>
+</main>
+{% endblock %}

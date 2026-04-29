@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Bassly | Klantprofiel bewerken{% endblock %}
+{% block content %}
+<main class="page-stack">
+    <section class="page-hero compact-hero">
+        <p class="eyebrow">Klantprofiel</p>
+        <h1>Houd je klantgegevens up-to-date voor vlottere bookings.</h1>
+        <p class="lead">
+            Deze gegevens worden gebruikt om je bookingaanvragen sneller en correcter te verwerken.
+        </p>
+    </section>
+
+    <section class="booking-layout">
+        <form class="booking-form" method="POST">
+            <div class="form-grid">
+                <label>
+                    Naam
+                    <input type="text" name="full_name" value="{{ profile.full_name }}" required>
+                </label>
+                <label>
+                    Telefoon
+                    <input type="text" name="phone" value="{{ profile.phone or '' }}">
+                </label>
+                <label>
+                    Bedrijf / organisatie
+                    <input type="text" name="company" value="{{ profile.company or '' }}">
+                </label>
+                <label>
+                    Stad / regio
+                    <input type="text" name="city" value="{{ profile.city or '' }}">
+                </label>
+            </div>
+            <button class="button button-gold" type="submit">Profiel opslaan</button>
+        </form>
+
+        <aside class="booking-sidebar">
+            <div class="sidebar-card">
+                <p class="eyebrow">Waarom dit belangrijk is</p>
+                <p>Je naam, contactgegevens en regio worden automatisch gebruikt bij nieuwe bookingaanvragen.</p>
+            </div>
+            <div class="sidebar-card dark-card">
+                <p class="eyebrow">Volgende stap</p>
+                <h3>Na dit profiel kan je meteen bookings aanvragen.</h3>
+                <p>Zo hoef je bij elke nieuwe aanvraag minder opnieuw in te vullen en blijft je account netjes opgebouwd.</p>
+            </div>
+        </aside>
+    </section>
+</main>
+{% endblock %}

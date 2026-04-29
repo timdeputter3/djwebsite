@@ -27,6 +27,13 @@
                 <a class="{% if request.endpoint == 'join' %}is-current{% endif %}" href="{{ url_for('join') }}">DJ aanmelden</a>
                 <a class="{% if request.endpoint == 'book' %}is-current{% endif %}" href="{{ url_for('book') }}">Boeken</a>
                 <a class="{% if request.endpoint == 'contact' %}is-current{% endif %}" href="{{ url_for('contact') }}">Contact</a>
+                {% if signed_in_user %}
+                <a class="{% if request.endpoint == 'account' %}is-current{% endif %}" href="{{ url_for('account') }}">Mijn account</a>
+                <a href="{{ url_for('logout') }}">Uitloggen</a>
+                {% else %}
+                <a class="{% if request.endpoint == 'register' %}is-current{% endif %}" href="{{ url_for('register') }}">Account maken</a>
+                <a class="{% if request.endpoint == 'login' %}is-current{% endif %}" href="{{ url_for('login') }}">Login</a>
+                {% endif %}
                 {% if manager_logged_in %}
                 <a class="{% if request.endpoint == 'manager' %}is-current{% endif %}" href="{{ url_for('manager') }}">Manager</a>
                 <a href="{{ url_for('manager_logout') }}">Logout</a>
@@ -35,6 +42,18 @@
                 {% endif %}
             </nav>
         </header>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack">
+                    {% for category, message in messages %}
+                    <section class="notice {% if category == 'success' %}success-notice{% else %}error-notice{% endif %}">
+                        <strong>{% if category == 'success' %}Gelukt.{% else %}Let op.{% endif %}</strong>
+                        <span>{{ message }}</span>
+                    </section>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </div>
 </body>
